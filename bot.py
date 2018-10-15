@@ -15,12 +15,6 @@ import platform
 import curses
 import os
 
-'''
-Потом дописать bot.py, что бы можно было аргументами из .sh запустить или обучение, или работу бота. Потом отредактировать диалоги пьесы, обучить
-заново и протестировать. Затем в bot.py добавить распознавание голоса с микрофона и ответ голосом.
-'''
-
-
 f_source_data = 'data/source_data.txt'
 f_prepared_data = 'data/prepared_data.txt'
 f_prepared_data_pkl = 'data/prepared_data.pkl'
