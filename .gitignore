@@ -1,3 +1,12 @@
 __pycache__/
 .vscode/
 run.log
+data/prepared_data.txt
+data/prepared_data.pkl
+data/encoded_data.npz
+data/w2v_model.bin
+data/w2v_vocabulary.txt
+data/w2v_neighborhood.txt
+data/net_model.txt
+data/*.h5
+data/features_hist.png
