@@ -50,6 +50,30 @@ class Prediction:
         answer = re.sub(r'\s,', ',', answer)
         return answer
 
+    def assessment_training_accuracy(self, filename):
+        ''' Оценка точности обучения сети: подаёт на вход сети все вопросы из обучающей выборки и сравнивает полученный ответ сети с
+        ответом из обучающей выборки. 
+        1. filename - имя .npz файла с векторным представлением слов в парах [вопрос,ответ]'''
+        print('[i] Оценка точности обучения сети...')
+
+        npzfile = np.load(filename)
+        Q, A = npzfile["Q"], npzfile["A"]
+        
+        Q = (Q + 1.0) * 0.5
+
+        correct_answers = 0
+        for i in range(len(Q)):
+            answer = self.model.predict(Q[i][np.newaxis,:])
+            answer = answer * 2.0 - 1.0 
+            answer = self.w2v.vec2word(answer[0])
+            answer = self.preparation.prepare_answer(answer)
+            answer_standart = self.w2v.vec2word(A[i])
+            answer_standart = self.preparation.prepare_answer(answer_standart)
+            if answer == answer_standart:
+                correct_answers += 1
+        accuracy = (float(correct_answers)/float(len(A))) * 100
+        print('[i] Количество правильных ответов %i из %i, итоговая точность %.2f%%' % (correct_answers, len(A), accuracy))
+
     def __load_simpleseq2seq_model(self, filename):
         ''' Загрузка параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) из .txt файла.  '''
         file_r = open(filename)

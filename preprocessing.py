@@ -44,7 +44,7 @@ class Preparation:
         print('[i] Сохранение результата в %s и %s.pkl' % (filename_out, filename_out[:filename_out.find('.')]))
         self.__data_write(data, filename_out) 
         self.__data_info(number_words)
-    
+
 
     def prepare_quest(self, quest):
         ''' Преобразует вопрос к сети в последовательность фиксированного размера.
@@ -191,7 +191,7 @@ class Preparation:
 
 def main():
     b = Preparation()
-    b.prepare_all('data/source text.txt', 'data/processed text.txt')
+    b.prepare_all('data/source_data.txt', 'data/prepared_data.txt')
 
 if __name__ == '__main__':
     main()

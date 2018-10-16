@@ -15,6 +15,8 @@ import platform
 import curses
 import os
 
+# Отредактировать диалоги пьесы, обучить заново и протестировать. Затем добавить распознавание голоса с микрофона и ответ голосом.
+
 f_source_data = 'data/source_data.txt'
 f_prepared_data = 'data/prepared_data.txt'
 f_prepared_data_pkl = 'data/prepared_data.pkl'
@@ -34,6 +36,9 @@ def train():
 
     t = Training()
     t.train(f_encoded_data, f_net_model, 2, 50, 5)
+
+    pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
+    pr.assessment_training_accuracy(f_encoded_data)
 
 def predict():
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)

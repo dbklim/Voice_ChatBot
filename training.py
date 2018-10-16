@@ -57,6 +57,11 @@ class Training:
                 self.__delete_tempfiles(i, path_for_out)
         print('[i] Обучение завершено')
 
+        answer = model.predict(Q[0][np.newaxis,:])
+        answer = answer * 2.0 - 1.0
+          
+
+
     def __save_simpleseq2seq_model(self, filename, input_dim, hidden_dim, output_length, output_dim, depth, loss, optimizer):
         ''' Сохранение параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) в .txt файл. '''
         file_w = open(filename, 'w')
@@ -83,7 +88,7 @@ class Training:
 
 def main():
     t = Training()
-    t.train('data/data_enc.npz', 'data/net_model.txt', 2, 50, 5)
+    t.train('data/encoded_data.npz', 'data/net_model.txt', 2, 50, 5)
 
 
 if __name__ == '__main__':

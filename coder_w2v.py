@@ -139,8 +139,8 @@ class CoderW2V:
 def main():
     coder = CoderW2V()
 
-    f_in = 'data/processed text.pkl'
-    f_out = 'data/data_enc.npz'
+    f_in = 'data/prepared_data.pkl'
+    f_out = 'data/encoded_data.npz'
     f_model = 'data/w2v_model.bin'
     f_vocab = 'data/w2v_vocabulary.txt'
     f_nbhd = 'data/w2v_neighborhood.txt'
