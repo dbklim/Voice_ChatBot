@@ -15,6 +15,9 @@ import seq2seq
 from seq2seq.models import SimpleSeq2Seq
 import numpy as np
 import re
+import sys
+import curses
+import os
 
 
 class Prediction:
@@ -61,8 +64,12 @@ class Prediction:
         
         Q = (Q + 1.0) * 0.5
 
+        curses.setupterm()
+        
         correct_answers = 0
-        for i in range(len(Q)):
+        len_Q = len(Q)
+        print('Оценено 0 из %i...' % len_Q)
+        for i in range(len_Q):
             answer = self.model.predict(Q[i][np.newaxis,:])
             answer = answer * 2.0 - 1.0 
             answer = self.w2v.vec2word(answer[0])
@@ -70,7 +77,10 @@ class Prediction:
             answer_standart = self.w2v.vec2word(A[i])
             answer_standart = self.preparation.prepare_answer(answer_standart)
             if answer == answer_standart:
-                correct_answers += 1
+                correct_answers += 1     
+            if i % 10 == 0:       
+                os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
+                print('Оценено %i из %i, правильных ответов %i...' % (i, len_Q, correct_answers))  
         accuracy = (float(correct_answers)/float(len(A))) * 100
         print('[i] Количество правильных ответов %i из %i, итоговая точность %.2f%%' % (correct_answers, len(A), accuracy))
 
