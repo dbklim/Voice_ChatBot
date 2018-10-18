@@ -51,17 +51,17 @@ class Training:
 
         for i in range(1, number_training_cycles + 1):
             model.fit(Q, A, epochs = number_epochs)
-            print('\n\tсохранение промежуточного результата %i/%i' % (i, number_training_cycles))
-            model.save_weights('%snet_%i_weights.h5' % (path_for_out, i))
+            print('\n[i] Сохранение промежуточного результата %i/%i...\n' % (i, number_training_cycles))
+            if i == number_training_cycles:
+                #model.save('%snet_final.h5' % (path_for_out))
+                model.save_weights('%snet_final_weights.h5' % (path_for_out))
+            else:
+                #model.save('%snet_%i.h5' % (path_for_out, i))
+                model.save_weights('%snet_%i_weights.h5' % (path_for_out, i))
             if i % 3 == 0 and i != number_training_cycles:
                 self.__delete_tempfiles(i, path_for_out)
         print('[i] Обучение завершено')
-
-        answer = model.predict(Q[0][np.newaxis,:])
-        answer = answer * 2.0 - 1.0
-          
-
-
+        
     def __save_simpleseq2seq_model(self, filename, input_dim, hidden_dim, output_length, output_dim, depth, loss, optimizer):
         ''' Сохранение параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) в .txt файл. '''
         file_w = open(filename, 'w')

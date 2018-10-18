@@ -95,9 +95,9 @@ class CoderW2V:
             log.basicConfig(format = '%(asctime)s : %(levelname)s : %(message)s', level = log.INFO)
 
         sentences = [ q + a for [q,a] in data ] 
-        model = word2vec.Word2Vec(min_count = 1, size = 150, window = 5, workers = multiprocessing.cpu_count())
+        model = word2vec.Word2Vec(min_count = 1, size = w_size, window = window_size, workers = multiprocessing.cpu_count())
         model.build_vocab(sentences)
-        model.train(sentences, epochs = 100, total_examples = len(data))
+        model.train(sentences, epochs = number_epochs, total_examples = len(data))
 
         model.wv.save_word2vec_format(filename_w2v_model, binary = True) 
         return model
