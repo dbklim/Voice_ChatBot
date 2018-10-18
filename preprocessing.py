@@ -39,6 +39,15 @@ class Preparation:
         number_words = np.asarray([ [ len(q), len(a) ] for [q,a] in data ]) 
         self.input_size = number_words.max() + 2  # количество входов сети
 
+        '''
+        Что бы посмотреть предложения, которые длиннее 25 слов
+        for words in data:
+            if len(words[0]) > 25:
+                print('0: %s || %i' % (words[0], len(words[0])))
+            if len(words[1]) > 25:
+                print('1: %s || %i' % (words[1], len(words[1])))
+                '''
+
         data = self.__fill_cells(data)
                 
         print('[i] Сохранение результата в %s и %s.pkl' % (filename_out, filename_out[:filename_out.find('.')]))
@@ -107,14 +116,15 @@ class Preparation:
     def __clean_string(self, str):
         ''' Очистка одной строки от неподдерживаемых символов. '''
         result = str.lower()
-        result = re.sub(r'\.', ' ', result) 
+        #result = re.sub(r'\.', ' ', result) 
         #result = re.sub(r',', ' ', result) 
         result = re.sub(r':', ' ', result) 
         result = re.sub(r'-', ' ', result) 
-        result = re.sub(r';', ' ', result) 
-        result = re.sub(r'!', ' ', result) 
+        result = re.sub(r';', ',', result) 
+        #result = re.sub(r'!', ' ', result) 
         result = re.sub(r'…', ' ', result) 
-        result = re.sub(r'\.{1,5}', ' ', result)
+        #result = re.sub(r'\.{2,5}', ' ', result)
+        result = re.sub(r'\.{2,5}', '...', result)
         result = re.sub(r'"', ' ', result)
         #result = re.sub(r'\.\.\.*', '…', result) 
         #result = re.sub(r'[\W]+', ' ', result) # удаление всех не букв
