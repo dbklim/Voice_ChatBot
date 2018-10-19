@@ -93,6 +93,7 @@ class Preparation:
         # Замена конструкций вида '.,' и ',.' на '.' и ','
         answer = re.sub(r'\.,{1,5}', '.', answer)
         answer = re.sub(r',\.{1,5}', ',', answer)
+        answer = re.sub(r',\?{1,5}', ',', answer)
 
         current_string = answer
         final_answer = ''
@@ -109,6 +110,8 @@ class Preparation:
             i += 1
         if len(current_string) > 2:
             final_answer += current_string
+        if len(final_answer) == 0:
+            final_answer = current_string
         return final_answer
 
 
@@ -158,6 +161,7 @@ class Preparation:
         result = re.sub(r'\.{2,5}', '...', result)
         result = re.sub(r'"', '', result)
         result = re.sub(r"'", '', result)
+        result = re.sub(r'ё', 'е', result)
         result = re.sub(r'\([^()]*\)', '', result) # удаление скобок вместе с содержимым
         result = re.sub(r'\({1,5}|\){1,5}', '', result) # удаление отдельно стоящих скобок
         #result = re.sub(r'\.\.\.*', '…', result) 

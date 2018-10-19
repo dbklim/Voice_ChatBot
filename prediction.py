@@ -50,7 +50,6 @@ class Prediction:
         answer = answer * 2.0 - 1.0  
         answer = self.w2v.vec2word(answer[0])
         answer = self.preparation.prepare_answer(answer)
-        answer = re.sub(r'\s,', ',', answer)
         return answer
 
     def assessment_training_accuracy(self, filename):
