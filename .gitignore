@@ -12,3 +12,4 @@ data/*.npz
 data/*.bin
 data/*.h5
 data/*.png
+*.wav
