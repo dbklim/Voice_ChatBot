@@ -8,6 +8,7 @@ from preprocessing import Preparation
 from coder_w2v import CoderW2V
 from training import Training
 from prediction import Prediction
+from text_to_speech import tts
 
 import sys
 import signal
@@ -15,6 +16,7 @@ import platform
 import curses
 import os
 import time
+
 
 f_source_data = 'data/source_data.txt'
 f_prepared_data = 'data/prepared_data.txt'
@@ -83,6 +85,7 @@ def predict():
         quest = input("Пользователь: ")
         answer = pr.predict(quest)
         print("\t=> %s\n" % answer)
+        tts(answer, 'playback')
 
 def main():
     if len(sys.argv) > 1:
@@ -103,7 +106,9 @@ def main():
         while True:
             choice = input('Введите цифру: ')
             if choice == '1':
-                train()
+                choice = input('Вы уверены?(д/н) ')
+                if choice == 'д':
+                    train()
                 break
             elif choice == '2':
                 predict()
