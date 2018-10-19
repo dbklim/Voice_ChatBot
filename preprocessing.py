@@ -54,7 +54,6 @@ class Preparation:
         self.__data_write(data, filename_out) 
         self.__data_info(number_words)
 
-
     def prepare_quest(self, quest):
         ''' Преобразует вопрос к сети в последовательность фиксированного размера.
         1. quest - строка, содержащая вопрос
@@ -67,7 +66,6 @@ class Preparation:
         quest = self.__fill_cells_quest(quest)    
         return quest
 
-
     def prepare_answer(self, answer):
         ''' Преобразует ответ сети в виде последовательности фиксированного размера в предложение.
         1. answer - последовательность фиксированного размера
@@ -76,7 +74,42 @@ class Preparation:
             i = answer.index('<EOS>')
         except:
             i = len(answer)
-        return ' '.join([ w for w in answer[0:i] if (w != '<PAD>') and (w != '<EOS>') and (w != '<GO>') ])
+        answer = ' '.join([ w for w in answer[0:i] if (w != '<PAD>') and (w != '<EOS>') and (w != '<GO>') ])       
+        return self.__clean_answer(answer)
+
+    def __clean_answer(self, answer):
+        ''' Очистка ответа от повторений знаков препинания и замена букв в нижнем регистре после знаков препинания '!', '?' и '.' 
+        на буквы в верхнем регистре. '''
+
+        # Удаление пробелов перед ',', '.', '!' и '?'
+        answer = re.sub(r'\s,', ',', answer)
+        answer = re.sub(r'\s\.', '.', answer)
+        answer = re.sub(r'\s!', '!', answer)
+        answer = re.sub(r'\s\?', '?', answer)
+        # Замена нескольких подряд идущих ','  '!' и '?' на одиночные
+        answer = re.sub(r',{2,5}', ',', answer)
+        answer = re.sub(r'!{2,5}', '!', answer)
+        answer = re.sub(r'\?{2,5}', '?', answer)
+        # Замена конструкций вида '.,' и ',.' на '.' и ','
+        answer = re.sub(r'\.,{1,5}', '.', answer)
+        answer = re.sub(r',\.{1,5}', ',', answer)
+
+        current_string = answer
+        final_answer = ''
+        i = 0
+        while i < len(current_string)-2:  # Перебор каждых двух подряд идущих символов    
+            # Если текущие два подряд идущих символа совпадают с каким-либо шаблоном в условии
+            if current_string[i:i+2] == '! ' or current_string[i:i+2] == '? ' or current_string[i:i+2] == '. ':
+                final_answer += current_string[0:i+2] # Сохраняем в финальный текст подстроку до шаблона и сам шаблон
+                current_string = current_string[i+2:len(current_string)] # Оставляем только подстроку, идущую после шаблона
+                if current_string[0].islower(): # Если первый символ подстроки после шаблона в нижнем регистре - замена на верхний регистр
+                    current_string = current_string[:0] + current_string[0].upper() + current_string[1:]
+                i = 0 
+                continue
+            i += 1
+        if len(current_string) > 2:
+            final_answer += current_string
+        return final_answer
 
 
     def __data_load(self, filename):
@@ -106,30 +139,30 @@ class Preparation:
             i += 1
         return result
 
-
     def __data_clean(self, data):
         ''' Очистка всех пар [вопрос, ответ] от неподдерживаемых символов. '''
         result = [ [ self.__clean_string(q), self.__clean_string(a) ] for [q,a] in data ]
         return result
-    
 
     def __clean_string(self, str):
         ''' Очистка одной строки от неподдерживаемых символов. '''
         result = str.lower()
-        #result = re.sub(r'\.', ' ', result) 
-        #result = re.sub(r',', ' ', result) 
-        result = re.sub(r':', ' ', result) 
-        result = re.sub(r'-', ' ', result) 
+        #result = re.sub(r'\.', '', result) 
+        #result = re.sub(r',', '', result) 
+        result = re.sub(r':', '', result) 
+        result = re.sub(r'-', '', result) 
         result = re.sub(r';', ',', result) 
-        #result = re.sub(r'!', ' ', result) 
-        result = re.sub(r'…', ' ', result) 
-        #result = re.sub(r'\.{2,5}', ' ', result)
+        #result = re.sub(r'!', '', result) 
+        #result = re.sub(r'\.{2,5}', '', result)
+        result = re.sub(r'…', '', result)         
         result = re.sub(r'\.{2,5}', '...', result)
-        result = re.sub(r'"', ' ', result)
+        result = re.sub(r'"', '', result)
+        result = re.sub(r"'", '', result)
+        result = re.sub(r'\([^()]*\)', '', result) # удаление скобок вместе с содержимым
+        result = re.sub(r'\({1,5}|\){1,5}', '', result) # удаление отдельно стоящих скобок
         #result = re.sub(r'\.\.\.*', '…', result) 
-        #result = re.sub(r'[\W]+', ' ', result) # удаление всех не букв
+        #result = re.sub(r'[\W]+', '', result) # удаление всех не букв
         return result
-
 
     def __data_split(self, data):
         ''' Разбиение пар [вопрос, ответ] или одиночного вопроса на отдельные слова (знаки препинания - отдельные элементы). '''
@@ -141,7 +174,6 @@ class Preparation:
             result = [ [ [ w for w in reversed(q) ], a ] for [q,a] in result ] # перестраивание слов вопроса в обратном порядке
         return result
     
-
     def __tokenizer(self, str):
         ''' Разбиение строки на слова. '''
         result = re.split(r'(\W)', str) # разбиение строки на последовательность из слов и знаков препинания
@@ -150,24 +182,20 @@ class Preparation:
             del result[-1]
         return result
 
-
     def __fill_cells(self, data):
         ''' Выравнивание всех пар по размеру. '''
         result = [ [self.__fill_cells_quest(q), self.__fill_cells_answ(a)] for [q,a] in data ]
         return result
-
 
     def __fill_cells_answ(self, a):
         ''' Выравнивание ответа по размеру, заполняя пустые места словом <PAD>. Например: [..., '<EOS>', '<PAD>', ...] '''
         result = a + ['<EOS>'] + ['<PAD>'] * (self.input_size - len(a) - 1) 
         return result
 
-
     def __fill_cells_quest(self, q):
         ''' Выравнивание вопроса по размеру, заполняя пустые места словом <PAD>. Например: [..., '<PAD>', 'вопрос', '<GO>'] '''
         result = ['<PAD>'] * (self.input_size - len(q) - 1) + q + ['<GO>']
         return result
-
 
     def __data_write(self, data, filename):
         ''' Запись полученных данных в .txt и .pkl файлы. '''
@@ -177,7 +205,6 @@ class Preparation:
         with open(filename, 'w') as file:
             for d in data:
                 print(d, file=file)
-
 
     def __data_info(self, number_words):
         ''' Вывод информации о полученных парах [вопрос, ответ]. '''
