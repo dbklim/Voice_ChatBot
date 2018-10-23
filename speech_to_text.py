@@ -21,7 +21,7 @@ class SpeechRecognition:
     1.1. from_file - распознавание речи из .wav файла (частота дискретизации 16кГц, 16bit, моно)
     1.2. from_microphone - распознавание речи с микрофона '''
     def __init__(self, mode):
-        self.current_dirname = os.path.dirname(sys.argv[0])
+        self.current_dirname = os.path.dirname(os.path.realpath(__file__))
         self.work_mode = mode
         model_path = get_model_path()
 
@@ -35,7 +35,7 @@ class SpeechRecognition:
         elif self.work_mode == 'from_microphone':
             self.speech_from_microphone = LiveSpeech(
                 verbose=False,
-                sampling_rate=8000,
+                sampling_rate=16000,
                 buffer_size=2048,
                 no_search=False,
                 full_utt=False,
@@ -71,7 +71,7 @@ class SpeechRecognition:
             return self.speech_from_file.hypothesis()
         elif self.work_mode == 'from_microphone':
             for phrase in self.speech_from_microphone:
-                return phrase
+                return str(phrase)
         else:
             print('[E] Перед использованием данной функции необходимо вызвать initialize().')
             return
@@ -80,7 +80,9 @@ class SpeechRecognition:
 def create_dictionary(filename_vocabulary):
     ''' Создание словаря для pocketsphinx на основе словаря word2vec. После выполнения в .../pocketsphinx/model/ будет создан ru_bot.dic.
     1. filename_vocabulary - имя словаря word2vec '''
-    filename_vocabulary = os.path.dirname(sys.argv[0]) + '/' + filename_vocabulary
+    
+    print('[i] Создание словаря для pocketsphinx...')
+    filename_vocabulary = os.path.dirname(os.path.realpath(__file__)) + '/' + filename_vocabulary
     path_dict_for_ps = '/usr/local/lib/python3.5/dist-packages/pocketsphinx/model/'
     filename_dict_for_ps = 'ru_bot.dic'
     command_line = "sudo perl text2dict/dict2transcript.pl '" + filename_vocabulary + "' " + path_dict_for_ps + filename_dict_for_ps
@@ -91,11 +93,12 @@ def create_dictionary(filename_vocabulary):
 
 
 
-def main():
+def main():   
     print('[i] Загрузка языковой модели...')
-    sr = SpeechRecognition('from_file')
+    sr = SpeechRecognition('from_microphone')
     print('[i] Готово')
-    print(sr.stt('data/answer.wav'))
+    while True:
+        print(sr.stt('data/answer.wav'))
 
 
 if __name__ == '__main__':
