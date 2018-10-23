@@ -66,6 +66,7 @@ class Prediction:
         curses.setupterm()
         
         correct_answers = 0
+        wrong_answers = []
         len_Q = len(Q)
         print('Оценено 0 из %i...' % len_Q)
         for i in range(len_Q):
@@ -76,12 +77,25 @@ class Prediction:
             answer_standart = self.w2v.vec2word(A[i])
             answer_standart = self.preparation.prepare_answer(answer_standart)
             if answer == answer_standart:
-                correct_answers += 1     
+                correct_answers += 1   
+            else:
+                # Сохранение неправильных ответов для последующего вывода
+                quest = self.w2v.vec2word(Q[i])
+                quest = list(reversed(quest))
+                quest = self.preparation.prepare_answer(quest)                
+                wrong_answers.append([quest, answer])
             if i % 10 == 0:       
                 os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
                 print('Оценено %i из %i, правильных ответов %i...' % (i, len_Q, correct_answers))  
         accuracy = (float(correct_answers)/float(len(A))) * 100
         print('[i] Количество правильных ответов %i из %i, итоговая точность %.2f%%' % (correct_answers, len(A), accuracy))
+
+        if len(wrong_answers) < 50:
+            i = 0
+            print('Неправильные ответы:')
+            for phrase in wrong_answers:
+                i += 1
+                print('%i. %s  %%%%  %s' % (i, phrase[0], phrase[1]))
 
     def __load_simpleseq2seq_model(self, filename):
         ''' Загрузка параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) из .txt файла.  '''
