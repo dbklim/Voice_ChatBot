@@ -9,6 +9,7 @@ from coder_w2v import CoderW2V
 from training import Training
 from prediction import Prediction
 from text_to_speech import tts
+from speech_to_text import create_dictionary, SpeechRecognition
 
 import sys
 import signal
@@ -37,12 +38,14 @@ def train():
     w2v.words2vec(f_prepared_data_pkl, f_encoded_data, f_w2v_model, f_w2v_vocab, f_w2v_nbhd, size = 500, epochs = 1000)
 
     t = Training()
-    t.train(f_encoded_data, f_net_model, 2, 50, 10)   
+    t.train(f_encoded_data, f_net_model, 2, 50, 10)       
 
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
     pr.assessment_training_accuracy(f_encoded_data)
 
-    print('[i] Общее время обучения: %.4f мин или %.4f ч' % ((time.time() - start_time)/60.0, ((time.time() - start_time)/60.0)/60.0))
+    print('\n[i] Общее время обучения: %.4f мин или %.4f ч' % ((time.time() - start_time)/60.0, ((time.time() - start_time)/60.0)/60.0))
+    
+    create_dictionary(f_w2v_vocab)
     
     # 248 входных фраз, epochs = 100
     # 10 итераций, 5 эпох - точность 0% (size = 150)
@@ -77,32 +80,80 @@ def train():
     # 50 итераций, 20 эпох - обучение займёт примерно 9.4 часа
     # 50 итераций, 15 эпох - обучение займёт примерно 7.3 часа
     # 50 итераций, 10 эпох - точность 98.62% (1574 из 1596 правильных ответов), время обучения - 4.8ч или 287.7 мин
+    # 50 итераций, 10 эпох - точность 98.18% (1567 из 1596 правильных ответов)
 
-def predict():
+def predict(for_speech_recognition = False, for_speech_synthesis = False):
+    ''' Работа с обученной моделью seq2seq.
+    1. for_speech_recognition - включение распознавания речи с микрофона с помощью PocketSphinx
+    2. for_speech_synthesis - включение озвучивания ответов с помощью RHVoice '''
+
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
+    if for_speech_recognition == True:
+        print('[i] Инициализация языковой модели...')
+        sr = SpeechRecognition('from_microphone')
     print('\n')
+    quest = ''
     while(True):
-        quest = input("Пользователь: ")
+        if for_speech_recognition == True:        
+            print('Слушаю...')
+            quest = sr.stt()
+            os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
+            print('Пользователь: ' + quest)
+        else:
+            quest = input("Пользователь: ")
         answer = pr.predict(quest)
         print("\t=> %s\n" % answer)
-        tts(answer, 'playback')
+        if for_speech_synthesis == True:
+            tts(answer, 'playback')
 
 def main():
+    curses.setupterm()
     if len(sys.argv) > 1:
         if sys.argv[1] == 'train':
             train()
         elif sys.argv[1] == 'predict':
+            if len(sys.argv) > 2:
+                if sys.argv[2] == '-ss':
+                    if len(sys.argv) > 3:
+                        if sys.argv[3] == '-sr':
+                            predict(True, True)
+                        else:
+                            print("[E] Неверный аргумент командной строки '" + sys.argv[3] + "'. Введите help для помощи.")
+                            sys.exit(0)
+                    predict(False, True)
+                    
+                elif sys.argv[2] == '-sr':
+                    if len(sys.argv) > 3:
+                        if sys.argv[3] == '-ss':
+                            predict(True, True) 
+                        else:
+                            print("[E] Неверный аргумент командной строки '" + sys.argv[3] + "'. Введите help для помощи.")
+                            sys.exit(0)
+                    predict(True, False)
+
+                else:
+                    print("[E] Неверный аргумент командной строки '" + sys.argv[2] + "'. Введите help для помощи.")
+                    sys.exit(0)                    
             predict()
-        else:
-            print('[E] Неверный аргумент командной строки. Поддерживаемые варианты:')
+        elif sys.argv[1] == 'help':
+            print('Поддерживаемые варианты работы:')
             print('\ttrain - обучение модели seq2seq')
             print('\tpredict - работа с обученной моделью seq2seq')
+            print('\tpredict -ss - включено озвучивание ответов с помощью RHVoice')
+            print('\tpredict -sr - включено распознавание речи с помощью PocketSphinx')
+            print('\tpredict -ss -sr - включено озвучивание ответов и распознавание речи')
+            print('\tpredict -sr -ss - включено озвучивание ответов и распознавание речи')
+            sys.exit(0)
+        else:
+            print("[E] Неверный аргумент командной строки '" + sys.argv[1] + "'. Введите help для помощи.")
             sys.exit(0)
     else:
-        curses.setupterm()
         print('[i] Выберите вариант работы бота:')
         print('\t1. train - обучение модели seq2seq')
         print('\t2. predict - работа с обученной моделью seq2seq')
+        print('\t3. predict -ss - включено озвучивание ответов с помощью RHVoice')
+        print('\t4. predict -sr - включено распознавание речи с помощью PocketSphinx')
+        print('\t5. predict -ss -sr - включено озвучивание ответов и распознавание речи')
         while True:
             choice = input('Введите цифру: ')
             if choice == '1':
@@ -113,6 +164,15 @@ def main():
             elif choice == '2':
                 predict()
                 break
+            elif choice == '3':
+                predict(False, True)
+                break
+            elif choice == '4':
+                predict(True, False)
+                break
+            elif choice == '5':
+                predict(True, True)
+                break
             else:
                 os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
 
@@ -122,6 +182,7 @@ def main():
 def on_stop(*args):
     print("\n[i] Бот остановлен")
     sys.exit(0)
+
 
 if __name__ == '__main__':
     # При нажатии комбинаций Ctrl+Z, Ctrl+C либо закрытии терминала будет вызываться функция on_stop() (Работает только на linux системах!)
