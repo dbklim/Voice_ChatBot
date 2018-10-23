@@ -1,6 +1,5 @@
 __pycache__/
 .vscode/
-run.log
 data/prepared_data.txt
 data/w2v_vocabulary.txt
 data/w2v_neighborhood.txt
@@ -12,4 +11,9 @@ data/*.npz
 data/*.bin
 data/*.h5
 data/*.png
+text2dict/my_dictionary.txt
+text2dict/my_dictionary_out.txt
+text2dict/my_dictionary_out.txt.accent
 *.wav
+*.raw
+*.log
