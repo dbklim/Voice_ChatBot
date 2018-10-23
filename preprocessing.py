@@ -61,7 +61,7 @@ class Preparation:
 
         !!!Если не был вызван prepare_all(), необходимо задать input_size!!! '''
 
-        quest = self.__clean_string(quest)
+        quest = self.__clean_quest(quest)
         quest = self.__data_split(quest)
         quest = self.__fill_cells_quest(quest)    
         return quest
@@ -75,9 +75,9 @@ class Preparation:
         except:
             i = len(answer)
         answer = ' '.join([ w for w in answer[0:i] if (w != '<PAD>') and (w != '<EOS>') and (w != '<GO>') ])       
-        return self.__clean_answer(answer)
+        return self.__prepare_answer(answer)
 
-    def __clean_answer(self, answer):
+    def __prepare_answer(self, answer):
         ''' Очистка ответа от повторений знаков препинания и замена букв в нижнем регистре после знаков препинания '!', '?' и '.' 
         на буквы в верхнем регистре. '''
 
@@ -92,6 +92,7 @@ class Preparation:
         answer = re.sub(r'\?{2,5}', '?', answer)
         # Замена конструкций вида '.,' и ',.' на '.' и ','
         answer = re.sub(r'\.,{1,5}', '.', answer)
+        answer = re.sub(r'\.\?{1,5}', '?', answer)
         answer = re.sub(r',\.{1,5}', ',', answer)
         answer = re.sub(r',\?{1,5}', ',', answer)
 
@@ -144,29 +145,53 @@ class Preparation:
 
     def __data_clean(self, data):
         ''' Очистка всех пар [вопрос, ответ] от неподдерживаемых символов. '''
-        result = [ [ self.__clean_string(q), self.__clean_string(a) ] for [q,a] in data ]
+        result = [ [ self.__clean_quest(q), self.__clean_answer(a) ] for [q,a] in data ]
         return result
 
-    def __clean_string(self, str):
-        ''' Очистка одной строки от неподдерживаемых символов. '''
-        result = str.lower()
-        #result = re.sub(r'\.', '', result) 
-        #result = re.sub(r',', '', result) 
-        result = re.sub(r':', '', result) 
-        result = re.sub(r'-', '', result) 
-        result = re.sub(r';', ',', result) 
-        #result = re.sub(r'!', '', result) 
-        #result = re.sub(r'\.{2,5}', '', result)
-        result = re.sub(r'…', '', result)         
-        result = re.sub(r'\.{2,5}', '...', result)
-        result = re.sub(r'"', '', result)
-        result = re.sub(r"'", '', result)
-        result = re.sub(r'ё', 'е', result)
-        result = re.sub(r'\([^()]*\)', '', result) # удаление скобок вместе с содержимым
-        result = re.sub(r'\({1,5}|\){1,5}', '', result) # удаление отдельно стоящих скобок
-        #result = re.sub(r'\.\.\.*', '…', result) 
-        #result = re.sub(r'[\W]+', '', result) # удаление всех не букв
-        return result
+    def __clean_quest(self, quest):
+        ''' Очистка вопроса от неподдерживаемых символов. '''
+        quest = quest.lower()
+        quest = re.sub(r'\.', '', quest) 
+        quest = re.sub(r',', '', quest) 
+        quest = re.sub(r':', '', quest) 
+        quest = re.sub(r'-', ' ', quest) 
+        quest = re.sub(r';', ' ', quest) 
+        quest = re.sub(r'!', '', quest) 
+        quest = re.sub(r'\?', '', quest)
+        quest = re.sub(r'…', '', quest)  
+        quest = re.sub(r'\.{2,5}', '', quest)               
+        #quest = re.sub(r'\.{2,5}', '...', quest)
+        quest = re.sub(r'"', '', quest)
+        quest = re.sub(r"'", '', quest)
+        quest = re.sub(r'«|»', '', quest)
+        quest = re.sub(r'ё', 'е', quest)
+        quest = re.sub(r'\([^()]*\)', ' ', quest) # удаление скобок вместе с содержимым
+        quest = re.sub(r'\({1,5}|\){1,5}', ' ', quest) # удаление отдельно стоящих скобок
+        #quest = re.sub(r'\.\.\.*', '…', quest) 
+        #quest = re.sub(r'[\W]+', '', quest) # удаление всех не букв
+        return quest
+    
+    def __clean_answer(self, answer):
+        ''' Очистка ответа от неподдерживаемых символов. '''
+        answer = answer.lower()
+        #answer = re.sub(r'\.', '', answer) 
+        #answer = re.sub(r',', '', answer) 
+        answer = re.sub(r':', '', answer) 
+        #answer = re.sub(r'-', '', answer) 
+        answer = re.sub(r';', ',', answer) 
+        #answer = re.sub(r'!', '', answer)         
+        #answer = re.sub(r'…', '', answer)    
+        #answer = re.sub(r'\.{2,5}', '', answer)     
+        answer = re.sub(r'\.{2,5}', '…', answer)
+        answer = re.sub(r'"', '', answer)
+        answer = re.sub(r"'", '', answer)
+        answer = re.sub(r'«|»', '', answer)
+        answer = re.sub(r'ё', 'е', answer)
+        answer = re.sub(r'\([^()]*\)', '', answer) # удаление скобок вместе с содержимым
+        answer = re.sub(r'\({1,5}|\){1,5}', '', answer) # удаление отдельно стоящих скобок
+        #answer = re.sub(r'\.\.\.*', '…', answer) 
+        #answer = re.sub(r'[\W]+', '', answer) # удаление всех не букв
+        return answer
 
     def __data_split(self, data):
         ''' Разбиение пар [вопрос, ответ] или одиночного вопроса на отдельные слова (знаки препинания - отдельные элементы). '''
@@ -182,8 +207,9 @@ class Preparation:
         ''' Разбиение строки на слова. '''
         result = re.split(r'(\W)', str) # разбиение строки на последовательность из слов и знаков препинания
         result = [ word for word in result if word.strip() ] # удаление пустых элементов из последовательности
-        if result[-1] == '.': # удаление точки в конце, если она есть
-            del result[-1]
+        if len(result) > 1:
+            if result[-1] == '.': # удаление точки в конце, если она есть
+                del result[-1]
         return result
 
     def __fill_cells(self, data):
