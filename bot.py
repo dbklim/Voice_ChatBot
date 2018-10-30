@@ -1,3 +1,4 @@
+#!/usr/bin/python3 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 #       OS : GNU/Linux Ubuntu 16.04 
 # COMPILER : Python 3.5.2
@@ -9,7 +10,8 @@ from coder_w2v import CoderW2V
 from training import Training
 from prediction import Prediction
 from text_to_speech import tts
-from speech_to_text import create_dictionary, SpeechRecognition
+from speech_to_text import SpeechRecognition
+from preparing_speech_to_text import building_language_model
 
 import sys
 import signal
@@ -35,17 +37,17 @@ def train():
     prep.prepare_all(f_source_data, f_prepared_data)
 
     w2v = CoderW2V()
-    w2v.words2vec(f_prepared_data_pkl, f_encoded_data, f_w2v_model, f_w2v_vocab, f_w2v_nbhd, size = 500, epochs = 1000)
+    w2v.words2vec(f_prepared_data_pkl, f_encoded_data, f_w2v_model, f_w2v_vocab, f_w2v_nbhd, size = 500, epochs = 1000, window=10)
 
     t = Training()
-    t.train(f_encoded_data, f_net_model, 2, 50, 10)       
+    t.train(f_encoded_data, f_net_model, 2, 150, 5)       
 
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
     pr.assessment_training_accuracy(f_encoded_data)
 
     print('\n[i] Общее время обучения: %.4f мин или %.4f ч' % ((time.time() - start_time)/60.0, ((time.time() - start_time)/60.0)/60.0))
     
-    create_dictionary(f_w2v_vocab)
+    building_language_model(f_source_data)
     
     # 248 входных фраз, epochs = 100
     # 10 итераций, 5 эпох - точность 0% (size = 150)
@@ -81,6 +83,12 @@ def train():
     # 50 итераций, 15 эпох - обучение займёт примерно 7.3 часа
     # 50 итераций, 10 эпох - точность 98.62% (1574 из 1596 правильных ответов), время обучения - 4.8ч или 287.7 мин
     # 50 итераций, 10 эпох - точность 98.18% (1567 из 1596 правильных ответов)
+    # 55 итераций, 10 эпох - точность 98.38% (1575 из 1601 правильных ответов)
+    # 55 итераций, 5 эпох - точность 94.57% (1514 из 1601 првильных ответов)
+    # 55 итераций, 5 эпох - точность 95.19% (1524 из 1601 правильных ответов)
+
+    # window = 10, 65 итераций, 5 эпох - точность 0.87% (14 из 1601 правильных ответов), ошибка 0.0957
+    # window = 10, 150 итераций, 5 эпох - точность 98.5% (1577 из 1601 правильных ответов), ошибка 0.0348
 
 def predict(for_speech_recognition = False, for_speech_synthesis = False):
     ''' Работа с обученной моделью seq2seq.
@@ -88,9 +96,10 @@ def predict(for_speech_recognition = False, for_speech_synthesis = False):
     2. for_speech_synthesis - включение озвучивания ответов с помощью RHVoice '''
 
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
-    if for_speech_recognition == True:
-        print('[i] Инициализация языковой модели...')
-        sr = SpeechRecognition('from_microphone')
+
+    print('[i] Инициализация языковой модели...')
+    sr = SpeechRecognition('from_microphone')
+
     print('\n')
     quest = ''
     while(True):
@@ -105,6 +114,8 @@ def predict(for_speech_recognition = False, for_speech_synthesis = False):
         print("\t=> %s\n" % answer)
         if for_speech_synthesis == True:
             tts(answer, 'playback')
+
+# добавить лог запросов и ответов, добавить запись необработанных запросов в файл, добавить rest-api
 
 def main():
     curses.setupterm()
