@@ -10,6 +10,7 @@
 
 import os
 import sys
+import re
 import subprocess
 from pydub import AudioSegment
 from pocketsphinx import Pocketsphinx, LiveSpeech, get_model_path
@@ -28,7 +29,7 @@ class SpeechRecognition:
         if self.work_mode == 'from_file':
             config = {
                 'hmm': os.path.join(model_path, 'zero_ru.cd_cont_4000'),
-                'lm': os.path.join(model_path, 'ru.lm'),
+                'lm': os.path.join(model_path, 'ru_bot.lm'),
                 'dict': os.path.join(model_path, 'ru_bot.dic')
             }
             self.speech_from_file = Pocketsphinx(**config)
@@ -40,12 +41,13 @@ class SpeechRecognition:
                 no_search=False,
                 full_utt=False,
                 hmm=os.path.join(model_path, 'zero_ru.cd_cont_4000'),
-                lm=os.path.join(model_path, 'ru.lm'),
+                lm=os.path.join(model_path, 'ru_bot.lm'),
                 dic=os.path.join(model_path, 'ru_bot.dic')
             )
         else:
             print('[E] Неподдерживаемый режим работы, проверьте значение переменной mode.')
             return
+
 
     def stt(self, filename_audio = None):
         ''' Распознавание речи с помощью PocketSphinx. Режим задаётся при создании объекта класса (из файла или с микрофона).
@@ -77,26 +79,10 @@ class SpeechRecognition:
             return
 
 
-def create_dictionary(filename_vocabulary):
-    ''' Создание словаря для pocketsphinx на основе словаря word2vec. После выполнения в .../pocketsphinx/model/ будет создан ru_bot.dic.
-    1. filename_vocabulary - имя словаря word2vec '''
-    
-    print('[i] Создание словаря для pocketsphinx...')
-    filename_vocabulary = os.path.dirname(os.path.realpath(__file__)) + '/' + filename_vocabulary
-    path_dict_for_ps = '/usr/local/lib/python3.5/dist-packages/pocketsphinx/model/'
-    filename_dict_for_ps = 'ru_bot.dic'
-    command_line = "sudo perl text2dict/dict2transcript.pl '" + filename_vocabulary + "' " + path_dict_for_ps + filename_dict_for_ps
-    subprocess.call(command_line, shell=True)
-    if os.path.exists(path_dict_for_ps + filename_dict_for_ps + '.accent'):
-        subprocess.call('sudo rm -f ' + path_dict_for_ps + filename_dict_for_ps + '.accent', shell=True)
-
-
-
-
 def main():   
-    print('[i] Загрузка языковой модели...')
+    print('[i] Загрузка языковой модели... ', end = '')
     sr = SpeechRecognition('from_microphone')
-    print('[i] Готово')
+    print('ок')
     while True:
         print(sr.stt('data/answer.wav'))
 
