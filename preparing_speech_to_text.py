@@ -32,10 +32,12 @@ def data_load(filename):
             result.append(q) # сохранение вопросов
     return result
 
+
 def data_clean(data):
     ''' Очистка всех вопросов от знаков препинания и неподдерживаемых символов. '''
     result = [ clean_quest(q) for q in data ]
     return result
+
 
 def clean_quest(quest):
     ''' Очистка вопроса от знаков препинания и неподдерживаемых символов. '''
@@ -61,6 +63,7 @@ def clean_quest(quest):
     #quest = re.sub(r'[\W]+', '', quest) # удаление всех не букв
     return quest
 
+
 def preparing_questions(filename_in):
     ''' Чтение пар вопрос %% ответ из filename_in, выделение вопросов, удаление знаков препинания 
     и неподдерживаемых символов, заключение каждого предложения в <s>..</s> и сохранение результата 
@@ -84,6 +87,7 @@ def preparing_questions(filename_in):
     with open('temp/prepared_questions.txt', 'w') as file:
         for d in data:
             file.write(d + '\n')
+
 
 def building_language_model(filename_source_data):
     ''' Создания статической языковой модели и фонетического словаря для PocketSphinx на основе вопросов из обучающей выборки.
@@ -170,6 +174,7 @@ def building_language_model(filename_source_data):
     command_line = "sudo cp '" + current_dirname + "prepared_questions.dic' '" + path_dict_for_ps + "ru_bot.dic'"
     subprocess.call(command_line, shell=True)
     print('[i] Готово')
+
 
 def create_dictionary(filename_vocabulary):
     ''' Создание фонетического словаря из обычного, созданного text2wfreq и wfreq2vocab из вопросов обучающей выборки. 

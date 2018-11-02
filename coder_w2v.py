@@ -27,6 +27,7 @@ class CoderW2V:
         if mode == 'load_model':
             self.model = word2vec.Word2VecKeyedVectors.load_word2vec_format(filename_w2v_model, binary = True)
 
+
     def words2vec(self, filename_in, filename_out, filename_w2v_model, filename_w2v_vocab, filename_w2v_neighborhood, 
                   size, epochs, window = 5, logging = False):
         ''' Осуществляет кодирование предложений в вектора. Предназначен для кодирования обучающей выборки для seq2seq модели НС.
@@ -68,6 +69,7 @@ class CoderW2V:
         print('[i] Сохранение учебного набора в %s' % filename_out)
         np.savez(filename_out, Q = Q, A = A)
 
+
     def word2vec(self, quest):
         ''' Кодирует последовательность фиксированного размера в вектор. 
         1. quest - последовательность фиксированного размера
@@ -79,8 +81,8 @@ class CoderW2V:
                 result.append(self.model[w])
             except KeyError:
                 return 'Error:' + w
-        # result = np.asarray([self.model[w] for w in quest])
         return np.asarray(result)
+
 
     def vec2word(self, answer):
         ''' Декодирует вектор в последовательность фиксированного размера. 
@@ -88,6 +90,7 @@ class CoderW2V:
         2. возвращает последовательность фиксированного размера '''
         answ_seq = [ self.model.similar_by_vector(v)[0][0] for v in answer ]
         return answ_seq
+
 
     def __w2v_fit(self, data, filename_w2v_model, w_size, window_size, number_epochs, logging):
         ''' Обучение модели W2V. Возвращает обученную модель.'''      
@@ -101,6 +104,7 @@ class CoderW2V:
 
         model.wv.save_word2vec_format(filename_w2v_model, binary = True) 
         return model
+
 
     def __model_test(self, model, data, filename_w2v_vocabulary, filename_w2v_neighborhood):
         ''' Тестирование обученной модели: определение размера и соранение словаря, определение числа потерянных слов и 
@@ -127,6 +131,7 @@ class CoderW2V:
         if i > 0:
             print('[i] Потерянных слов %i из %i.' % (i, len(vocabulary)))
 
+
     def __data_w2v_encode(self, model, data):
         ''' Кодирование предложений из data в вектор. Возвращает отдельно массивы закодированных вопросов и ответов. '''
         Q = np.asarray([ [ model[w] for w in q ] for q,a in data ])
@@ -145,7 +150,7 @@ def main():
     f_vocab = 'data/w2v_vocabulary.txt'
     f_nbhd = 'data/w2v_neighborhood.txt'
 
-    coder.words2vec(f_in, f_out, f_model, f_vocab, f_nbhd, size = 150, epochs = 100) # было 500 1000 для авторских данных
+    coder.words2vec(f_in, f_out, f_model, f_vocab, f_nbhd, size = 150, epochs = 100) # 500 1000 для больших данных (1500-1600 обучающих пар)
 
 
 if __name__ == '__main__':

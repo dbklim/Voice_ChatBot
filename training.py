@@ -62,6 +62,7 @@ class Training:
                 self.__delete_tempfiles(i, path_for_out)
         print('[i] Обучение завершено')
         
+
     def __save_simpleseq2seq_model(self, filename, input_dim, hidden_dim, output_length, output_dim, depth, loss, optimizer):
         ''' Сохранение параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) в .txt файл. '''
         file_w = open(filename, 'w')
@@ -76,6 +77,7 @@ class Training:
         # Сохранение через model.save() не корректно работает в данном случае, вероятно из-за использования в SimpleSeq2Seq моделей 
         # recurrentshop. При последующей загрузке модели model = load_model() возникает ошибка, решением которой является, по сути, 
         # построение сети заново со всеми параметрами. Для этого и был написан данный костыль.
+
 
     def __delete_tempfiles(self, i, path_for_out):
         ''' Удаление файлов с промежуточным результатом обучения сети (значения весов). '''

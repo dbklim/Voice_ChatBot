@@ -38,6 +38,7 @@ class Prediction:
         self.preparation.input_size = _output_length
         self.w2v = CoderW2V('load_model', filename_w2v_model)
 
+
     def predict(self, quest):
         ''' Предварительная обработка вопроса к сети, перевод его в вектор, получение ответа от сети и перевод его в строку.
         1. возвращает строку с ответом сети '''
@@ -51,6 +52,7 @@ class Prediction:
         answer = self.w2v.vec2word(answer[0])
         answer = self.preparation.prepare_answer(answer)
         return answer
+
 
     def assessment_training_accuracy(self, filename):
         ''' Оценка точности обучения сети: подаёт на вход сети все вопросы из обучающей выборки и сравнивает полученный ответ сети с
@@ -96,6 +98,7 @@ class Prediction:
             for phrase in wrong_answers:
                 i += 1
                 print('%i. %s  %%%%  %s' % (i, phrase[0], phrase[1]))
+
 
     def __load_simpleseq2seq_model(self, filename):
         ''' Загрузка параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) из .txt файла.  '''
