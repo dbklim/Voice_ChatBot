@@ -1,3 +1,3 @@
 #!/bin/sh
 
-time python3 -uB bot.py train | tee run.log
+time python3 -uB bot.py train | tee bot.log
