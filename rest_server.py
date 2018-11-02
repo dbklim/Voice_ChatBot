@@ -11,6 +11,8 @@ REST-сервер для взаимодействия с ботом. Испол�
 
 import os
 import sys
+import signal
+import platform
 import base64
 import json
 import subprocess
@@ -128,6 +130,7 @@ def log(message, addr=None, level='info'):
 
 sr = None
 pr = None
+http_server = None
 # Получение графа вычислений tensorflow по умолчанию (для последующей передачи в другой поток)
 graph = get_default_graph()
 
@@ -150,8 +153,9 @@ def internal_server_error(error):
 
 @auth.get_password
 def get_password(username):
+    # login testbot, password test
     if username == 'testbot':
-        return 'skt2LN31'
+        return 'test'
 
 
 @auth.error_handler
@@ -240,19 +244,25 @@ def text_to_text():
 def run(wsgi, host, port):
     ''' Проверка корректности и доступности host:port, загрузка языковой модели и нейронной сети и запуск сервера.
     1. wsgi - True: запуск WSGI сервера, False: запуск тестового Flask сервера '''
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        sock.bind((host, port)) # Проверка корректности и доступности введённого host:port
-        if port == 0: # Если был введён порт 0, то автовыбор любого доступного порта
+    
+    if port == 0: # Если был введён порт 0, то автовыбор любого доступного порта
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind((host, 0))
             port = sock.getsockname()[1]
             log('выбран порт ' + str(port))
-        sock.close()
-    except socket.gaierror:
-        log('адрес ' + host + ':' + str(port) + ' некорректен', level='error')
-        sys.exit(1)
-    except OSError:
-        log('адрес ' + host + ':' + str(port) + ' недоступен', level='error')
-        sys.exit(1)
+            sock.close()
+        except socket.gaierror:
+            log('адрес ' + host + ':' + str(port) + ' некорректен', level='error')
+            sock.close()
+            return
+        except OSError:
+            log('адрес ' + host + ':' + str(port) + ' недоступен', level='error')
+            sock.close()
+            return
+
+    log('Flask v.' + flask_version + ', WSGIServer v.' + wsgi_version)    
+    log('установлен максимальный размер принимаемых данных: {:.2f} кБ'.format(max_content_length/1024))
 
     log('инициализация языковой модели...')
     global sr
@@ -266,15 +276,35 @@ def run(wsgi, host, port):
     
     if wsgi:  
         log('WSGI сервер запущен на http://' + host + ':' + str(port))
-        http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger)
-        http_server.serve_forever()
+        global http_server
+        try:
+            http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger)
+            http_server.serve_forever()
+        except OSError:
+            print()
+            log('адрес ' + host + ':' + str(port) + ' недоступен', level='error')
     else:
         log('запуск тестового Flask сервера...')
-        print()
-        app.run(host=host, port=port, threaded=True, debug=False)
+        try:
+            app.run(host=host, port=port, threaded=True, debug=False)
+        except OSError:
+            print()
+            log('адрес ' + host + ':' + str(port) + ' недоступен', level='error')
+
+
+def on_stop(*args):
+    print()
+    log('сервер остановлен')
+    if http_server != None:
+        http_server.close()
+    sys.exit(0)
 
 
 if __name__ == '__main__':
+    # При нажатии комбинаций Ctrl+Z, Ctrl+C либо закрытии терминала будет вызываться функция on_stop() (Работает только на linux системах!)
+    if platform.system() == "Linux":
+        for sig in (signal.SIGTSTP, signal.SIGINT, signal.SIGTERM):
+            signal.signal(sig, on_stop)
     host = '127.0.0.1'
     port = 5000
     
@@ -284,9 +314,6 @@ if __name__ == '__main__':
     # rest_server.py -d host:port - запуск тестового Flask сервера на host:port    
     # rest_server.py -d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети с портом 5000
     # Что бы выбрать доступный порт автоматически, укажите в host:port или localaddr:port порт 0
-    
-    log('Flask v.' + flask_version + ', WSGIServer v.' + wsgi_version)    
-    log('установлен максимальный размер принимаемых данных: {:.2f} кБ'.format(max_content_length/1024))
 
     # run(False, host, port)
 
