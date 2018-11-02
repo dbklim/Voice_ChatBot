@@ -3,17 +3,17 @@ __pycache__/
 data/prepared_data.txt
 data/w2v_vocabulary.txt
 data/w2v_neighborhood.txt
-data/net_model.txt
 data/old горе от ума.txt
 data/old скотный двор.txt
 data/*.pkl
 data/*.npz
-data/*.bin
 data/*.h5
+!data/net_final_weights.h5
 data/*.png
 text2dict/my_dictionary.txt
 text2dict/my_dictionary_out.txt
 text2dict/my_dictionary_out.txt.accent
+temp/
 *.wav
 *.raw
 *.log
