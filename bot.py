@@ -31,13 +31,14 @@ f_w2v_nbhd = 'data/w2v_neighborhood.txt'
 f_net_model = 'data/net_model.txt'
 f_net_weights = 'data/net_final_weights.h5'
 
+
 def train():
     start_time = time.time()
     prep = Preparation()
     prep.prepare_all(f_source_data, f_prepared_data)
 
     w2v = CoderW2V()
-    w2v.words2vec(f_prepared_data_pkl, f_encoded_data, f_w2v_model, f_w2v_vocab, f_w2v_nbhd, size = 500, epochs = 1000, window=10)
+    w2v.words2vec(f_prepared_data_pkl, f_encoded_data, f_w2v_model, f_w2v_vocab, f_w2v_nbhd, size = 500, epochs = 1000, window=5)
 
     t = Training()
     t.train(f_encoded_data, f_net_model, 2, 150, 5)       
@@ -86,6 +87,8 @@ def train():
     # 55 итераций, 10 эпох - точность 98.38% (1575 из 1601 правильных ответов)
     # 55 итераций, 5 эпох - точность 94.57% (1514 из 1601 првильных ответов)
     # 55 итераций, 5 эпох - точность 95.19% (1524 из 1601 правильных ответов)
+    # 150 итераций, 5 эпох - точность 99.25% (1589 из 1601 правильных ответов), ошибка 0.207
+
 
     # window = 10, 65 итераций, 5 эпох - точность 0.87% (14 из 1601 правильных ответов), ошибка 0.0957
     # window = 10, 150 итераций, 5 эпох - точность 98.5% (1577 из 1601 правильных ответов), ошибка 0.0348
@@ -115,7 +118,6 @@ def predict(for_speech_recognition = False, for_speech_synthesis = False):
         if for_speech_synthesis == True:
             tts(answer, 'playback')
 
-# добавить лог запросов и ответов, добавить запись необработанных запросов в файл, добавить rest-api
 
 def main():
     curses.setupterm()
