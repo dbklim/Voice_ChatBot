@@ -21,10 +21,10 @@ def tts(text, mode, filename_audio = None):
     2. mode - может иметь два значения: into_file и playback
     2.1. into_file - запись синтезированной речи в .wav файл с частотой дискретизации 32 кГц и глубиной 16 бит, моно
     2.2. playback - воспроизведение речи сразу после синтезирования
-    3. filename_audio - имя .wav файла для сохранения синтезированной речи в режиме into_file (если не задан, используется /data/answer.wav) '''
+    3. filename_audio - имя .wav файла для сохранения синтезированной речи в режиме into_file (если не задан, используется temp/answer.wav) '''
 
     if filename_audio == None:
-        filename_audio = 'data/answer.wav'
+        filename_audio = 'temp/answer.wav'
     # Запись синтезированной речи в .wav файл с частотой дискретизации 32 кГц и глубиной 16 бит, моно, используется sox
     command_line = "echo '" + text + "' | RHVoice-client -s Anna+CLB " 
     command_line += "| sox -t wav - -r 32000 -c 1 -b 16 -t wav - >'" + os.path.dirname(os.path.realpath(__file__)) + '/' + filename_audio + "'"
@@ -45,7 +45,7 @@ def tts(text, mode, filename_audio = None):
 
 
 def main():
-    tts('ты мне  друг или нет?', 'into_file', 'data/answer.wav')
+    tts('ты любишь меня?', 'into_file', 'temp/answer.wav')
 
 
 if __name__ == '__main__':
