@@ -10,8 +10,11 @@ REST-сервер для взаимодействия с ботом. Испол�
 '''
 
 import os
+import sys
 import base64
 import json
+import subprocess
+import socket
 from logging.config import dictConfig
 from datetime import datetime
 from functools import wraps
@@ -26,7 +29,7 @@ from tensorflow import get_default_graph
 from preprocessing import Preparation
 from prediction import Prediction
 from text_to_speech import tts
-from speech_to_text import SpeechRecognition
+from speech_to_text import SpeechRecognition            
 
 
 # Удаление старых логов
@@ -36,12 +39,16 @@ if os.path.exists('server.log'):
         if os.path.exists('server.log.' + str(i)):
             os.remove('server.log.' + str(i))
 
+# Создание временной папки, если она была удалена
+if os.path.exists('temp') == False:
+    os.makedirs('temp')
+
 # Конфигурация логгера
 dictConfig({
     'version' : 1,
     'formatters' : {
         'simple' : {
-            'format' : '%(levelname)s\t| %(message)s'
+            'format' : '%(levelname)-8s | %(message)s'
         }
     },
     'handlers' : {
@@ -54,7 +61,7 @@ dictConfig({
         'file' : {
             'class' : 'logging.handlers.RotatingFileHandler',
             'level' : 'DEBUG',
-            'maxBytes' : 10 * 1024 * 1024,
+            'maxBytes' : 16 * 1024 * 1024,
             'backupCount' : 5,
             'formatter' : 'simple',
             'filename' : 'server.log'
@@ -80,7 +87,7 @@ dictConfig({
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
-max_content_length = 1 * 1 * 1024
+max_content_length = 16 * 1024 * 1024
 f_source_data = 'data/source_data.txt'
 f_w2v_model = 'data/w2v_model.bin'
 f_net_model = 'data/net_model.txt'
@@ -93,40 +100,38 @@ def limit_content_length():
         @wraps(f)
         def wrapper(*args, **kwargs):
             if request.content_length > max_content_length:                
-                log(request.remote_addr, 'превышен максимальный размер передаваемых данных ({:.2f} кБ)'.format(request.content_length/1024), 'error')
+                log('превышен максимальный размер передаваемых данных ({:.2f} кБ)'.format(request.content_length/1024), request.remote_addr, 'error')
                 return make_response(jsonify({'error': 'Maximum data transfer size exceeded, allowed only until {: .2f} kB.'.format(max_content_length/1024)}), 413)
             elif request.content_length == 0:
-                log(request.remote_addr, 'тело запроса не содержит данных', 'error')
+                log('тело запроса не содержит данных', request.remote_addr, 'error')
                 return make_response(jsonify({'error': 'The request body contains no data.'}), 400)
             return f(*args, **kwargs)
         return wrapper
     return decorator
 
 
-def log(addr, message, level='info'):
+def log(message, addr=None, level='info'):
     ''' Запись сообщения в лог файл с уровнем INFO или ERROR. По умолчанию используется INFO.
     1. addr - строка с адресом подключённого клиента
     2. message - сообщение
     3. level - уровень логгирования, может иметь значение либо 'info', либо 'error' '''
     if level == 'info':
-        app.logger.info(addr + ' - - ' + datetime.strftime(datetime.now(), '[%Y-%m-%d %H:%M:%S]') + ' ' + message)
+        if addr == None:
+            app.logger.info(datetime.strftime(datetime.now(), '[%Y-%m-%d %H:%M:%S]') + ' ' + message)
+        else:
+            app.logger.info(addr + ' - - ' + datetime.strftime(datetime.now(), '[%Y-%m-%d %H:%M:%S]') + ' ' + message)
     elif level == 'error':
-        app.logger.error(addr + ' - - ' + datetime.strftime(datetime.now(), '[%Y-%m-%d %H:%M:%S]') + ' ' + message)
+        if addr == None:
+            app.logger.error(datetime.strftime(datetime.now(), '[%Y-%m-%d %H:%M:%S]') + ' ' + message)
+        else:
+            app.logger.error(addr + ' - - ' + datetime.strftime(datetime.now(), '[%Y-%m-%d %H:%M:%S]') + ' ' + message)
 
-
-log('localhost', 'Flask v.' + flask_version + ', WSGIServer v.' + wsgi_version)
-log('localhost', 'запуск сервера...')
-log('localhost', 'установлен максимальный размер принимаемых данных: {:.2f} кБ'.format(max_content_length/1024))
-log('localhost', 'инициализация языковой модели...')
-sr = SpeechRecognition('from_file')
-
-log('localhost', 'загрузка модели seq2seq...')
-pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
+sr = None
+pr = None
 # Получение графа вычислений tensorflow по умолчанию (для последующей передачи в другой поток)
 graph = get_default_graph()
 
 
-# Код 302 переопределить непонятно как
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'The requested URL was not found on the server.'}), 404)
@@ -145,8 +150,8 @@ def internal_server_error(error):
 
 @auth.get_password
 def get_password(username):
-    if username == 'server':
-        return 'python'
+    if username == 'testbot':
+        return 'skt2LN31'
 
 
 @auth.error_handler
@@ -186,9 +191,9 @@ def speech_to_text():
     with open('temp/answer.wav', 'wb') as audio:
         audio.write(data)
 
-    log(request.remote_addr, 'принят .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(data)/1024))    
+    log('принят .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(data)/1024), request.remote_addr)    
     answer = sr.stt('temp/answer.wav')
-    log(request.remote_addr, "распознано: '" + answer + "'")
+    log("распознано: '" + answer + "'", request.remote_addr)
     return jsonify({'text':answer})
 
 
@@ -199,13 +204,13 @@ def text_to_speech():
     ''' Принимает строку, синтезирует речь с помощью RHVoice и возвращает .wav файл с синтезированной речью. '''    
     data = request.json
     data = data.get('text')
-    log(request.remote_addr, "принято: '" + data + "'")
+    log("принято: '" + data + "'", request.remote_addr)
     tts(data, 'into_file', 'temp/answer.wav')
 
     with open('temp/answer.wav', 'rb') as audiofile:
         data = audiofile.read()
     
-    log(request.remote_addr, 'создан .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(data)/1024))
+    log('создан .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(data)/1024), request.remote_addr)
     data = base64.b64encode(data)
     return jsonify({'wav':data.decode()})
 
@@ -217,10 +222,10 @@ def text_to_text():
     ''' Принимает строку с вопросом к боту и возвращает ответ в виде строки. '''
     data = request.json
     data = data.get('text')
-    log(request.remote_addr, "принято: '" + data + "'")
+    log("принято: '" + data + "'", request.remote_addr)
     with graph.as_default():
         answer = pr.predict(data)
-    log(request.remote_addr, "ответ: '" + answer + "'")
+    log("ответ: '" + answer + "'", request.remote_addr)
     return jsonify({'text':answer})
 
 # Всего 5 запросов:
@@ -232,9 +237,119 @@ def text_to_text():
 
 # Что бы узнать свой локальный адрес в сети: sudo ifconfig | grep "inet addr"
 
+def run(wsgi, host, port):
+    ''' Проверка корректности и доступности host:port, загрузка языковой модели и нейронной сети и запуск сервера.
+    1. wsgi - True: запуск WSGI сервера, False: запуск тестового Flask сервера '''
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.bind((host, port)) # Проверка корректности и доступности введённого host:port
+        if port == 0: # Если был введён порт 0, то автовыбор любого доступного порта
+            port = sock.getsockname()[1]
+            log('выбран порт ' + str(port))
+        sock.close()
+    except socket.gaierror:
+        log('адрес ' + host + ':' + str(port) + ' некорректен', level='error')
+        sys.exit(1)
+    except OSError:
+        log('адрес ' + host + ':' + str(port) + ' недоступен', level='error')
+        sys.exit(1)
+
+    log('инициализация языковой модели...')
+    global sr
+    sr = SpeechRecognition('from_file')
+    
+    log('загрузка модели seq2seq...')
+    global pr
+    print()
+    pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
+    print()
+    
+    if wsgi:  
+        log('WSGI сервер запущен на http://' + host + ':' + str(port))
+        http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger)
+        http_server.serve_forever()
+    else:
+        log('запуск тестового Flask сервера...')
+        print()
+        app.run(host=host, port=port, threaded=True, debug=False)
+
 
 if __name__ == '__main__':
-    http_server = WSGIServer(('127.0.0.1', 5000), app, log=app.logger)
-    http_server.serve_forever()
+    host = '127.0.0.1'
+    port = 5000
+    
+    # rest_server.py - запуск WSGI сервера с автоопределением адреса машины в локальной сети с портом 5000
+    # rest_server.py host:port - запуск WSGI сервера на host:port
+    # rest_server.py -d - запуск тестового Flask сервера на 127.0.0.1:5000
+    # rest_server.py -d host:port - запуск тестового Flask сервера на host:port    
+    # rest_server.py -d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети с портом 5000
+    # Что бы выбрать доступный порт автоматически, укажите в host:port или localaddr:port порт 0
+    
+    log('Flask v.' + flask_version + ', WSGIServer v.' + wsgi_version)    
+    log('установлен максимальный размер принимаемых данных: {:.2f} кБ'.format(max_content_length/1024))
 
-    app.run(host='127.0.0.1', port=5000, threaded=True, debug=False)
+    # run(False, host, port)
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '-d': # запуск тестового Flask сервера в debug режиме
+            if len(sys.argv) > 2:
+                if sys.argv[2].find('localaddr') != -1 and sys.argv[2].find(':') != -1: # для определения адреса машины в локальной сети
+                    command_line = "ifconfig | grep 'inet addr'"
+                    proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    out, err = proc.communicate()
+                    out = out.decode()
+                    err = err.decode()
+                    host = out[out.find('inet addr:') + len('inet addr:'):]
+                    host = host[:host.find(' ')]
+                    port = int(sys.argv[2][sys.argv[2].find(':') + 1:])
+                    run(False, host, port)
+                elif sys.argv[2].count('.') == 3 and sys.argv[2].count(':') == 1: # host:port
+                    host = sys.argv[2][:sys.argv[2].find(':')]
+                    port = int(sys.argv[2][sys.argv[2].find(':') + 1:])
+                    run(False, host, port)
+                else:
+                    print("\n[E] Неверный аргумент командной строки '" + sys.argv[2] + "'. Введите help для помощи.\n")
+            else:
+                run(False, host, port)
+
+        elif sys.argv[1].count('.') == 3 and sys.argv[1].count(':') == 1: # host:port
+            host = sys.argv[1][:sys.argv[1].find(':')]
+            port = int(sys.argv[1][sys.argv[1].find(':') + 1:])
+            run(True, host, port)
+        elif sys.argv[1] == 'help':
+            print('\nПоддерживаемые варианты работы:')
+            print('\tбез аргументов - запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000')
+            print('\thost:port - запуск WSGI сервера на host:port')
+            print('\t-d - запуск тестового Flask сервера на 127.0.0.1:5000')
+            print('\t-d host:port - запуск тестового Flask сервера на host:port')
+            print('\t-d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом 5000\n')
+        else:
+            print("\n[E] Неверный аргумент командной строки '" + sys.argv[1] + "'. Введите help для помощи.\n")
+    else: # запуск WSGI сервера с автоопределением адреса машины в локальной сети
+        command_line = "ifconfig | grep 'inet addr'"
+        proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        out = out.decode()
+        err = err.decode()
+        host = out[out.find('inet addr:') + len('inet addr:'):]
+        host = host[:host.find(' ')]
+        port = 5000
+        run(True, host, port)
+
+'''
+if sys.argv[1].count('*') > 0: # для задания максимальной длины принимаемых данных в виде выражения 
+    print('это выражение!')
+    temp = sys.argv[1]
+    new_content_length = 1
+    while temp.count('*') > 0:
+        new_content_length *= int(temp[:temp.find('*')])
+        temp = temp[temp.find('*') + 1:]
+    new_content_length *= int(temp)
+    max_content_length = new_content_length
+    print(max_content_length)
+elif sys.argv[1].isdigit() == True: # для задания максимальной длины принимаемых данных в виде одного числа 
+    print('это просто число!')
+    print(int(sys.argv[1]))
+    max_content_length = int(sys.argv[1]) * 1024
+    print(max_content_length)
+'''
