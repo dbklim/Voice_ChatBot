@@ -1,0 +1,7 @@
+input_dim=500
+hidden_dim=500
+output_length=26
+output_dim=500
+depth=2
+loss=mse
+optimizer=rmsprop
