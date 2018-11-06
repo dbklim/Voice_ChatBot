@@ -1,3 +1,7 @@
+Установка RHVoice вручную, если скрипт install_packages.sh не сработал или вы используете не Ubuntu.
+
+=============================================================================================================================
+
 Установка необходимых библиотек:
 sudo apt-get update
 sudo apt-get install scons
@@ -29,7 +33,7 @@ sudo ldconfig
 
 =============================================================================================================================
 
-Если неоступна команда RHVoice-client, необходимо:
+Если недоступна команда RHVoice-client, необходимо:
 1. В файле SConstruct в корне папки RHVoice раскомментировать строку 218
 218 has_giomm=conf.CheckPKG("giomm-2.4")
 
@@ -47,7 +51,7 @@ sudo ldconfig
 Примеры:
 echo "Проверка синтезатора речи" | RHVoice-client -s Anna+CLB | aplay
 echo "Проверка синтезатора речи" | RHVoice-client -s Anna+CLB >/tmp/test.wav
-echo "проверка" | RHVoice-client -s Anna+CLB |sox -t wav - -r 8000 -c 1 -b 16 -t wav - >/tmp/test.wav
+echo "проверка" | RHVoice-client -s Anna+CLB |sox -t wav - -r 32000 -c 1 -b 16 -t wav - >/tmp/test.wav
 
 === Голоса ===
 Русский
