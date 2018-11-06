@@ -107,6 +107,9 @@ def limit_content_length():
             elif request.content_length == 0:
                 log('тело запроса не содержит данных', request.remote_addr, 'error')
                 return make_response(jsonify({'error': 'The request body contains no data.'}), 400)
+            elif request.json == None:
+                log('тело запроса содержит неподдерживаемый тип данных', request.remote_addr, 'error')
+                return make_response(jsonify({'error': 'The request body contains an unsupported data type. Only json is supported'}), 415)
             return f(*args, **kwargs)
         return wrapper
     return decorator
@@ -191,7 +194,11 @@ def questions():
 def speech_to_text():
     ''' Принимает .wav файл с записанной речью, распознаёт её с помощью PocketSphinx и возвращает распознанную строку. '''
     data = request.json
-    data = base64.b64decode(data.get('wav'))
+    data = data.get('wav')
+    if data == None:
+        log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
+        return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
+    data = base64.b64decode(data)
     with open('temp/answer.wav', 'wb') as audio:
         audio.write(data)
 
@@ -208,6 +215,9 @@ def text_to_speech():
     ''' Принимает строку, синтезирует речь с помощью RHVoice и возвращает .wav файл с синтезированной речью. '''    
     data = request.json
     data = data.get('text')
+    if data == None:
+        log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
+        return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
     log("принято: '" + data + "'", request.remote_addr)
     tts(data, 'into_file', 'temp/answer.wav')
 
@@ -226,6 +236,9 @@ def text_to_text():
     ''' Принимает строку с вопросом к боту и возвращает ответ в виде строки. '''
     data = request.json
     data = data.get('text')
+    if data == None:
+        log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
+        return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
     log("принято: '" + data + "'", request.remote_addr)
     with graph.as_default():
         answer = pr.predict(data)
@@ -308,11 +321,11 @@ if __name__ == '__main__':
     host = '127.0.0.1'
     port = 5000
     
-    # rest_server.py - запуск WSGI сервера с автоопределением адреса машины в локальной сети с портом 5000
+    # rest_server.py - запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000
     # rest_server.py host:port - запуск WSGI сервера на host:port
     # rest_server.py -d - запуск тестового Flask сервера на 127.0.0.1:5000
     # rest_server.py -d host:port - запуск тестового Flask сервера на host:port    
-    # rest_server.py -d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети с портом 5000
+    # rest_server.py -d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом port
     # Что бы выбрать доступный порт автоматически, укажите в host:port или localaddr:port порт 0
 
     # run(False, host, port)
@@ -349,7 +362,7 @@ if __name__ == '__main__':
             print('\thost:port - запуск WSGI сервера на host:port')
             print('\t-d - запуск тестового Flask сервера на 127.0.0.1:5000')
             print('\t-d host:port - запуск тестового Flask сервера на host:port')
-            print('\t-d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом 5000\n')
+            print('\t-d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом port\n')
         else:
             print("\n[E] Неверный аргумент командной строки '" + sys.argv[1] + "'. Введите help для помощи.\n")
     else: # запуск WSGI сервера с автоопределением адреса машины в локальной сети
