@@ -48,6 +48,7 @@ class SpeechRecognition:
             print('[E] Неподдерживаемый режим работы, проверьте значение переменной mode.')
             return
 
+    # Добавить фильтры шума, например с помощью sox
 
     def stt(self, filename_audio = None):
         ''' Распознавание речи с помощью PocketSphinx. Режим задаётся при создании объекта класса (из файла или с микрофона).
@@ -66,7 +67,7 @@ class SpeechRecognition:
             # Создание декодера и распознавание
             self.speech_from_file.decode(
                 audio_file = self.current_dirname + '/' + filename_audio_raw,
-                buffer_size = 1024,
+                buffer_size = 2048,
                 no_search = False,
                 full_utt = False
             )

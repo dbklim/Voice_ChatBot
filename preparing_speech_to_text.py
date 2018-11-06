@@ -88,6 +88,8 @@ def preparing_questions(filename_in):
         for d in data:
             file.write(d + '\n')
 
+# Попробовать использовать CMUclmtk через pip3 install python-cmuclmtk
+# https://github.com/Holzhaus/python-cmuclmtk 
 
 def building_language_model(filename_source_data):
     ''' Создания статической языковой модели и фонетического словаря для PocketSphinx на основе вопросов из обучающей выборки.
