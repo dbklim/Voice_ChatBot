@@ -192,20 +192,30 @@ def questions():
 @auth.login_required
 @limit_content_length()
 def speech_to_text():
-    ''' Принимает .wav файл с записанной речью, распознаёт её с помощью PocketSphinx и возвращает распознанную строку. '''
+    ''' Принимает .wav/.opus файл с записанной речью, распознаёт её с помощью PocketSphinx и возвращает распознанную строку. '''    
     data = request.json
-    data = data.get('wav')
-    if data == None:
-        log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
-        return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
-    data = base64.b64decode(data)
-    with open('temp/answer.wav', 'wb') as audio:
-        audio.write(data)
+    audio = data.get('wav')
+    audio_format = 'wav'
+    if audio == None:
+        audio = data.get('opus')
+        audio_format = 'opus'
+        if audio == None:
+            log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
+            return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
 
-    log('принят .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(data)/1024), request.remote_addr)    
-    answer = sr.stt('temp/answer.wav')
-    log("распознано: '" + answer + "'", request.remote_addr)
-    return jsonify({'text':answer})
+    audio = base64.b64decode(audio)
+    with open('temp/question.' + audio_format, 'wb') as audiofile:
+        audiofile.write(audio)
+
+    log('принят .{} размером {:.2f} кБ, сохранено в temp/question.{}'.format(audio_format, len(audio)/1024, audio_format), request.remote_addr)    
+    question = sr.stt('temp/question.' + audio_format)
+
+    if question == 'error':
+        log('json в теле запроса содержит некорректные данные', request.remote_addr, 'error')
+        return make_response(jsonify({'error': 'Json in the request body contains incorrect data.'}), 415)
+
+    log("распознано: '" + question + "'", request.remote_addr)
+    return jsonify({'text':question})
 
 
 @app.route('/chatbot/text-to-speech', methods=['POST'])
@@ -222,11 +232,11 @@ def text_to_speech():
     tts(data, 'into_file', 'temp/answer.wav')
 
     with open('temp/answer.wav', 'rb') as audiofile:
-        data = audiofile.read()
+        audio = audiofile.read()
     
-    log('создан .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(data)/1024), request.remote_addr)
-    data = base64.b64encode(data)
-    return jsonify({'wav':data.decode()})
+    log('создан .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(audio)/1024), request.remote_addr)
+    audio = base64.b64encode(audio)
+    return jsonify({'wav':audio.decode()})
 
 
 @app.route('/chatbot/text-to-text', methods=['POST'])
@@ -248,11 +258,9 @@ def text_to_text():
 # Всего 5 запросов:
 # 1. GET-запрос на /chatbot/about, вернёт инфу о проекте
 # 2. GET-запрос на /chatbot/questions, вернёт список всех вопросов
-# 3. POST-запрос на /chatbot/speech-to-text, принимает .wav-файл и возвращает распознанную строку
+# 3. POST-запрос на /chatbot/speech-to-text, принимает .wav/.opus-файл и возвращает распознанную строку
 # 4. POST-запрос на /chatbot/text-to-speech, принимает строку и возвращает .wav-файл с синтезированной речью
 # 5. POST-запрос на /chatbot/text-to-text, принимает строку и возвращает ответ бота в виде строки
-
-# Что бы узнать свой локальный адрес в сети: sudo ifconfig | grep "inet addr"
 
 def run(host, port, wsgi = False, https_mode = False):
     ''' Автовыбор доступного порта (если указан порт 0), загрузка языковой модели и нейронной сети и запуск сервера.
@@ -362,7 +370,7 @@ if __name__ == '__main__':
     # rest_server.py -s -d localaddr:port - запуск тестового Flask сервера c поддержкой https, автоопределением адреса машины в локальной сети и портом port
     # Что бы выбрать доступный порт автоматически, укажите в host:port или localaddr:port порт 0
 
-    # run(host, port, wsgi=True)
+    #run(host, port, wsgi=False)
 
     if len(sys.argv) > 1:
         if sys.argv[1] == '-s': # запуск в режиме https
