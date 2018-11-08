@@ -52,16 +52,28 @@ class SpeechRecognition:
 
     def stt(self, filename_audio = None):
         ''' Распознавание речи с помощью PocketSphinx. Режим задаётся при создании объекта класса (из файла или с микрофона).
-        1. filename_audio - имя .wav файла с речью (частота дискретизации 16кГц, 16bit, моно)
+        1. filename_audio - имя .wav или .opus файла с речью (частота дискретизации >=16кГц, 16bit, моно)
         2. возвращает строку с распознанной речью '''
 
         if self.work_mode == 'from_file':            
             if filename_audio == None:
-                print('[E] В режиме from_file необходимо указывать имя .wav файла.')
+                print('[E] В режиме from_file необходимо указывать имя .wav или .opus файла.')
                 return
             filename_audio_raw = filename_audio[:filename_audio.find('.')] + '.raw'
+            filename_audio_wav = filename_audio[:filename_audio.find('.')] + '.wav'
+            audio_format = filename_audio[filename_audio.find('.') + 1:]
+            
+            # Конвертирование .opus файла в .wav
+            if audio_format == 'opus': 
+                command_line = "yes | ffmpeg -i '" + filename_audio + "' '" + filename_audio_wav + "'"
+                proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = proc.communicate()
+                if err.decode().find(filename_audio + ':') != -1:
+                    return 'error'
+
             # Конвертирование .wav файла в .raw
-            audio_file = AudioSegment.from_wav(self.current_dirname + '/' + filename_audio) 
+            audio_file = AudioSegment.from_wav(self.current_dirname + '/' + filename_audio_wav)
+            audio_file = audio_file.set_frame_rate(16000)
             audio_file.export(self.current_dirname + '/' + filename_audio_raw, format = 'raw')
 
             # Создание декодера и распознавание
@@ -75,9 +87,6 @@ class SpeechRecognition:
         elif self.work_mode == 'from_microphone':
             for phrase in self.speech_from_microphone:
                 return str(phrase)
-        else:
-            print('[E] Перед использованием данной функции необходимо вызвать initialize().')
-            return
 
 
 def main():   
@@ -85,7 +94,7 @@ def main():
     sr = SpeechRecognition('from_microphone')
     print('ок')
     while True:
-        print(sr.stt('data/answer.wav'))
+        print(sr.stt())
 
 
 if __name__ == '__main__':
