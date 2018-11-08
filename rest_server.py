@@ -254,7 +254,7 @@ def text_to_text():
 
 # Что бы узнать свой локальный адрес в сети: sudo ifconfig | grep "inet addr"
 
-def run(host, port, wsgi = False, https = False):
+def run(host, port, wsgi = False, https_mode = False):
     ''' Автовыбор доступного порта (если указан порт 0), загрузка языковой модели и нейронной сети и запуск сервера.
     1. wsgi - True: запуск WSGI сервера, False: запуск тестового Flask сервера
     2. https - True: запуск в режиме https (сертификат и ключ должны быть в cert.pem и key.pem), False: запуск в режиме http
@@ -292,12 +292,12 @@ def run(host, port, wsgi = False, https = False):
 
     if wsgi:
         global http_server
-        if https:
+        if https_mode:
             log('WSGI сервер запущен на https://' + host + ':' + str(port))
         else:
             log('WSGI сервер запущен на http://' + host + ':' + str(port))
         try:
-            if https:
+            if https_mode:
                 http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger, keyfile='key.pem', certfile='cert.pem')
             else:
                 http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger)
@@ -308,7 +308,7 @@ def run(host, port, wsgi = False, https = False):
     else:
         log('запуск тестового Flask сервера...')
         try:
-            if https:
+            if https_mode:
                 app.run(host=host, port=port, ssl_context=('cert.pem', 'key.pem'), threaded=True, debug=False)
             else:
                 app.run(host=host, port=port, threaded=True, debug=False)
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     host = '127.0.0.1'
     port = 5000
     
-    # Аргументы командной строки имеют следующую структуру: [ключи] [адрес:порт]
+    # Аргументы командной строки имеют следующую структуру: [ключ(-и)] [адрес:порт]
     # rest_server.py - запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000
     # rest_server.py host:port - запуск WSGI сервера на host:port
     # rest_server.py -d - запуск тестового Flask сервера на 127.0.0.1:5000
@@ -372,26 +372,26 @@ if __name__ == '__main__':
                         if sys.argv[3].find('localaddr') != -1 and sys.argv[3].find(':') != -1: # localaddr:port
                             host = get_address_on_local_network()
                             port = int(sys.argv[3][sys.argv[3].find(':') + 1:])
-                            run(host, port, https=True)
+                            run(host, port, https_mode=True)
                         elif sys.argv[3].count('.') == 3 and sys.argv[3].count(':') == 1: # host:port                        
                             host = sys.argv[3][:sys.argv[3].find(':')]
                             port = int(sys.argv[3][sys.argv[3].find(':') + 1:])
-                            run(host, port, https=True)                
+                            run(host, port, https_mode=True)                
                         else:
                             print("\n[E] Неверный аргумент командной строки '" + sys.argv[3] + "'. Введите help для помощи.\n")
                     else:
-                        run(host, port, https=True)
+                        run(host, port, https_mode=True)
 
                 elif sys.argv[2].count('.') == 3 and sys.argv[2].count(':') == 1: # запуск WSGI сервера на host:port              
                     host = sys.argv[2][:sys.argv[2].find(':')]
                     port = int(sys.argv[2][sys.argv[2].find(':') + 1:])
-                    run(host, port, wsgi=True, https=True)               
+                    run(host, port, wsgi=True, https_mode=True)               
 
                 else:
                     print("\n[E] Неверный аргумент командной строки '" + sys.argv[2] + "'. Введите help для помощи.\n")
             else: 
                 host = get_address_on_local_network()
-                run(host, port, wsgi=True, https=True)
+                run(host, port, wsgi=True, https_mode=True)
 
         elif sys.argv[1] == '-d': # запуск тестового Flask сервера
             if len(sys.argv) > 2:
