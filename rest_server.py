@@ -254,9 +254,12 @@ def text_to_text():
 
 # Что бы узнать свой локальный адрес в сети: sudo ifconfig | grep "inet addr"
 
-def run(wsgi, host, port):
+def run(host, port, wsgi = False, https = False):
     ''' Автовыбор доступного порта (если указан порт 0), загрузка языковой модели и нейронной сети и запуск сервера.
-    1. wsgi - True: запуск WSGI сервера, False: запуск тестового Flask сервера '''
+    1. wsgi - True: запуск WSGI сервера, False: запуск тестового Flask сервера
+    2. https - True: запуск в режиме https (сертификат и ключ должны быть в cert.pem и key.pem), False: запуск в режиме http
+    
+    Самоподписанный сертификат можно получить, выполнив: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365 '''
     
     if port == 0: # Если был введён порт 0, то автовыбор любого доступного порта
         try:
@@ -275,7 +278,7 @@ def run(wsgi, host, port):
             return
 
     log('Flask v.' + flask_version + ', WSGIServer v.' + wsgi_version)    
-    log('установлен максимальный размер принимаемых данных: {:.2f} кБ'.format(max_content_length/1024))
+    log('установлен максимальный размер принимаемых данных: {:.2f} Кб'.format(max_content_length/1024))
 
     log('инициализация языковой модели...')
     global sr
@@ -286,12 +289,18 @@ def run(wsgi, host, port):
     print()
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
     print()
-    
-    if wsgi:  
-        log('WSGI сервер запущен на http://' + host + ':' + str(port))
+
+    if wsgi:
         global http_server
+        if https:
+            log('WSGI сервер запущен на https://' + host + ':' + str(port))
+        else:
+            log('WSGI сервер запущен на http://' + host + ':' + str(port))
         try:
-            http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger)
+            if https:
+                http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger, keyfile='key.pem', certfile='cert.pem')
+            else:
+                http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger)
             http_server.serve_forever()
         except OSError:
             print()
@@ -299,10 +308,29 @@ def run(wsgi, host, port):
     else:
         log('запуск тестового Flask сервера...')
         try:
-            app.run(host=host, port=port, threaded=True, debug=False)
+            if https:
+                app.run(host=host, port=port, ssl_context=('cert.pem', 'key.pem'), threaded=True, debug=False)
+            else:
+                app.run(host=host, port=port, threaded=True, debug=False)
         except OSError:
             print()
             log('адрес ' + host + ':' + str(port) + ' недоступен', level='error')
+
+
+def get_address_on_local_network():
+    ''' Определение адреса машины в локальной сети с помощью выполнения ifconfig | grep 'inet addr'
+    1. возвращает строку с адресом '''
+
+    command_line = "ifconfig | grep 'inet addr'"
+    proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    out = out.decode()
+    while True:
+        out = out[out.find('inet addr:') + len('inet addr:'):]
+        host = out[:out.find(' ')]
+        out = out[out.find(' '):]
+        if host.find('192.168.') != -1:
+            return host
 
 
 def on_stop(*args):
@@ -321,60 +349,86 @@ if __name__ == '__main__':
     host = '127.0.0.1'
     port = 5000
     
+    # Аргументы командной строки имеют следующую структуру: [ключи] [адрес:порт]
     # rest_server.py - запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000
     # rest_server.py host:port - запуск WSGI сервера на host:port
     # rest_server.py -d - запуск тестового Flask сервера на 127.0.0.1:5000
     # rest_server.py -d host:port - запуск тестового Flask сервера на host:port    
     # rest_server.py -d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом port
+    # rest_server.py -s - запуск WSGI сервера с поддержкой https, автоопределением адреса машины в локальной сети и портом 5000
+    # rest_server.py -s host:port - запуск WSGI сервера c поддержкой https на host:port
+    # rest_server.py -s -d - запуск тестового Flask сервера c поддержкой https на 127.0.0.1:5000
+    # rest_server.py -s -d host:port - запуск тестового Flask сервера c поддержкой https на host:port    
+    # rest_server.py -s -d localaddr:port - запуск тестового Flask сервера c поддержкой https, автоопределением адреса машины в локальной сети и портом port
     # Что бы выбрать доступный порт автоматически, укажите в host:port или localaddr:port порт 0
 
-    # run(False, host, port)
+    # run(host, port, wsgi=True)
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == '-d': # запуск тестового Flask сервера в debug режиме
+        if sys.argv[1] == '-s': # запуск в режиме https
             if len(sys.argv) > 2:
-                if sys.argv[2].find('localaddr') != -1 and sys.argv[2].find(':') != -1: # для определения адреса машины в локальной сети
-                    command_line = "ifconfig | grep 'inet addr'"
-                    proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    out, err = proc.communicate()
-                    out = out.decode()
-                    err = err.decode()
-                    host = out[out.find('inet addr:') + len('inet addr:'):]
-                    host = host[:host.find(' ')]
+                if sys.argv[2] == '-d': # запуск тестового Flask сервера
+                    if len(sys.argv) > 3:
+                        if sys.argv[3].find('localaddr') != -1 and sys.argv[3].find(':') != -1: # localaddr:port
+                            host = get_address_on_local_network()
+                            port = int(sys.argv[3][sys.argv[3].find(':') + 1:])
+                            run(host, port, https=True)
+                        elif sys.argv[3].count('.') == 3 and sys.argv[3].count(':') == 1: # host:port                        
+                            host = sys.argv[3][:sys.argv[3].find(':')]
+                            port = int(sys.argv[3][sys.argv[3].find(':') + 1:])
+                            run(host, port, https=True)                
+                        else:
+                            print("\n[E] Неверный аргумент командной строки '" + sys.argv[3] + "'. Введите help для помощи.\n")
+                    else:
+                        run(host, port, https=True)
+
+                elif sys.argv[2].count('.') == 3 and sys.argv[2].count(':') == 1: # запуск WSGI сервера на host:port              
+                    host = sys.argv[2][:sys.argv[2].find(':')]
                     port = int(sys.argv[2][sys.argv[2].find(':') + 1:])
-                    run(False, host, port)
+                    run(host, port, wsgi=True, https=True)               
+
+                else:
+                    print("\n[E] Неверный аргумент командной строки '" + sys.argv[2] + "'. Введите help для помощи.\n")
+            else: 
+                host = get_address_on_local_network()
+                run(host, port, wsgi=True, https=True)
+
+        elif sys.argv[1] == '-d': # запуск тестового Flask сервера
+            if len(sys.argv) > 2:
+                if sys.argv[2].find('localaddr') != -1 and sys.argv[2].find(':') != -1: # localaddr:port
+                    host = get_address_on_local_network()
+                    port = int(sys.argv[2][sys.argv[2].find(':') + 1:])
+                    run(host, port)
                 elif sys.argv[2].count('.') == 3 and sys.argv[2].count(':') == 1: # host:port
                     host = sys.argv[2][:sys.argv[2].find(':')]
                     port = int(sys.argv[2][sys.argv[2].find(':') + 1:])
-                    run(False, host, port)
+                    run(host, port)                
                 else:
                     print("\n[E] Неверный аргумент командной строки '" + sys.argv[2] + "'. Введите help для помощи.\n")
             else:
-                run(False, host, port)
+                run(host, port)
 
-        elif sys.argv[1].count('.') == 3 and sys.argv[1].count(':') == 1: # host:port
+        elif sys.argv[1].count('.') == 3 and sys.argv[1].count(':') == 1: # запуск WSGI сервера на host:port
             host = sys.argv[1][:sys.argv[1].find(':')]
             port = int(sys.argv[1][sys.argv[1].find(':') + 1:])
-            run(True, host, port)
+            run(host, port, wsgi=True)
         elif sys.argv[1] == 'help':
             print('\nПоддерживаемые варианты работы:')
             print('\tбез аргументов - запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000')
             print('\thost:port - запуск WSGI сервера на host:port')
             print('\t-d - запуск тестового Flask сервера на 127.0.0.1:5000')
             print('\t-d host:port - запуск тестового Flask сервера на host:port')
-            print('\t-d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом port\n')
+            print('\t-d localaddr:port - запуск тестового Flask сервера с автоопределением адреса машины в локальной сети и портом port')
+            print('\t-s - запуск WSGI сервера с поддержкой https, автоопределением адреса машины в локальной сети и портом 5000')
+            print('\t-s host:port - запуск WSGI сервера с поддержкой https на host:port')
+            print('\t-s -d - запуск тестового Flask сервера с поддержкой https на 127.0.0.1:5000')
+            print('\t-s -d host:port - запуск тестового Flask сервера с поддержкой https на host:port')
+            print('\t-s -d localaddr:port - запуск тестового Flask сервера с поддержкой https, автоопределением адреса машины в локальной сети и портом port\n')
         else:
             print("\n[E] Неверный аргумент командной строки '" + sys.argv[1] + "'. Введите help для помощи.\n")
-    else: # запуск WSGI сервера с автоопределением адреса машины в локальной сети
-        command_line = "ifconfig | grep 'inet addr'"
-        proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = proc.communicate()
-        out = out.decode()
-        err = err.decode()
-        host = out[out.find('inet addr:') + len('inet addr:'):]
-        host = host[:host.find(' ')]
-        port = 5000
-        run(True, host, port)
+    else: # запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000
+        host = get_address_on_local_network()
+        run(host, port, wsgi=True)
 
 '''
 if sys.argv[1].count('*') > 0: # для задания максимальной длины принимаемых данных в виде выражения 
