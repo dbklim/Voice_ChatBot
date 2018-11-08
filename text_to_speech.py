@@ -15,6 +15,10 @@ from pydub import AudioSegment
 from pydub.playback import play
 
 
+# Создание временной папки, если она была удалена
+if os.path.exists('temp') == False:
+    os.makedirs('temp')
+
 def tts(text, mode, filename_audio = None):
     ''' Преобразование текста в речь с помощью RHVoice.
     1. text - строка, которую необходимо преобразовать
