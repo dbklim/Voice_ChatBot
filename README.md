@@ -3,10 +3,12 @@
 Проект состоит из двух частей - бот и RESTful сервер для взаимодействия с ним.
 
 Полный список всех необходимых для работы пакетов:
-1. Для Python3: decorator, Flask v1.0.2, Flask-HTTPAuth v3.2.4, gensim, gevent v1.3.7, h5py, Keras v2.2.4, matplotlib, numpy, pocketsphinx, pydub, [recurrentshop](https://github.com/datalogai/recurrentshop), requests, [seq2seq](https://github.com/farizrahman4u/seq2seq), tensorflow[-gpu].
+1. Для Python3.5: decorator, Flask v1.0.2, Flask-HTTPAuth v3.2.4, gensim, gevent v1.3.7, h5py, Keras v2.2.4, matplotlib, numpy, pocketsphinx, pydub, [recurrentshop](https://github.com/datalogai/recurrentshop), requests, [seq2seq](https://github.com/farizrahman4u/seq2seq), tensorflow[-gpu].
 2. Для Ubuntu: ffmpeg, libav-tools, scons, gcc, pkg-config, pulseaudio, libpulse-dev, portaudio19-dev, libglibmm-2.4-dev, libasound-dev, sonic, sox, swig.
 
-Если вы используете Ubuntu 16.04 или выше, для установки всех пакетов можно воспользоваться `install_packages.sh` (проверено в Ubuntu 16.04). Если в процессе установки RHVoice или CMUclmtk что-то пошло не так, вы можете установить и настроить их вручную используя инструкции в `Install RHVoice.txt` и `Install CMUclmtk.txt`.
+Если вы используете Ubuntu 16.04 или выше, для установки всех пакетов можно воспользоваться `install_packages.sh` (проверено в Ubuntu 16.04). 
+
+Если в процессе установки RHVoice или CMUclmtk что-то пошло не так, вы можете установить и настроить их вручную используя инструкции в `Install RHVoice.txt` и `Install CMUclmtk.txt`.
 
 [TensorFlow](https://www.tensorflow.org/install/) необходимо установить самостоятельно (я использую tensorflow-gpu v1.7).
 
@@ -21,9 +23,7 @@
 4. Работа с обученной моделью seq2seq с распознаванием речи с помощью [PocketSphinx](https://github.com/cmusphinx/pocketsphinx).
 5. Работа с обученной моделью seq2seq с озвучиванием ответов и распознаванием речи.
 
-
 ---
-
 
 **1. Обучение модели seq2seq.**
 
@@ -164,6 +164,7 @@ python3 bot.py predict -ss -sr
 8. `-s -d` - запуск тестового Flask сервера с поддержкой https на `127.0.0.1:5000`. Например: ```python3 rest_server.py -s -d```
 9. `-s -d host:port` - запуск тестового Flask сервера с поддержкой https на указанном `host` и `port`. Например: ```python3 rest_server.py -s -d 192.168.2.102:5000```
 10. `-s -d localaddr:port` - запуск тестового Flask сервера с поддержкой https, автоопределением адреса машины в локальной сети и портом `port`. Например: ```python3 rest_server.py -s -d localaddr:5000```
+
 Сервер может сам выбрать доступный порт, для этого нужно указать в `host:port` или `localaddr:port` порт `0` (например: ```python3 rest_server.py -d localaddr:0```).
 
 Всего поддерживается 5 запросов:
