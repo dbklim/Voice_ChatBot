@@ -3,14 +3,15 @@
 Проект состоит из двух частей - бот и RESTful сервер для взаимодействия с ним.
 
 Полный список всех необходимых для работы пакетов:
-1. Для Python3.5: decorator, Flask v1.0.2, Flask-HTTPAuth v3.2.4, gensim, gevent v1.3.7, h5py, Keras v2.2.4, matplotlib, numpy, pocketsphinx, pydub, [recurrentshop](https://github.com/datalogai/recurrentshop), requests, [seq2seq](https://github.com/farizrahman4u/seq2seq), tensorflow[-gpu].
-2. Для Ubuntu: ffmpeg, libav-tools, scons, gcc, pkg-config, pulseaudio, libpulse-dev, portaudio19-dev, libglibmm-2.4-dev, libasound-dev, sonic, sox, swig.
+1. Для Python3.5: decorator, Flask v1.0.2, Flask-HTTPAuth v3.2.4, gensim, gevent v1.3.7, h5py, Keras v2.2.4, matplotlib, numpy, pocketsphinx, pydub, simpleaudio, [recurrentshop](https://github.com/datalogai/recurrentshop), requests, [seq2seq](https://github.com/farizrahman4u/seq2seq), tensorflow[-gpu].
+2. Для Ubuntu: ffmpeg, libav-tools, make, git, scons, gcc, pkg-config, pulseaudio, libpulse-dev, portaudio19-dev, libglibmm-2.4-dev, libasound-dev, libao4, libao-dev, sonic, sox, swig.
 
-Если вы используете Ubuntu 16.04 или выше, для установки всех пакетов можно воспользоваться `install_packages.sh` (проверено в Ubuntu 16.04). 
+Если вы используете Ubuntu 16.04 или выше, для установки всех пакетов можно воспользоваться `install_packages.sh` (проверено в Ubuntu 16.04). По умолчанию будет установлен [TensorFlow](https://www.tensorflow.org/install/) для CPU. Если у вас есть видеокарта nvidia, вы можете установить [TensorFlowGPU](https://www.tensorflow.org/install/gpu). Для этого необходимо при запуске `install_packages.sh` передать параметр `gpu`. Например:
+```
+./install_packages.sh gpu
+```
 
 Если в процессе установки RHVoice или CMUclmtk что-то пошло не так, вы можете установить и настроить их вручную используя инструкции в `Install RHVoice.txt` и `Install CMUclmtk.txt`.
-
-[TensorFlow](https://www.tensorflow.org/install/) необходимо установить самостоятельно (я использую tensorflow-gpu v1.7).
 
 # Бот
 
