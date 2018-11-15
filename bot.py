@@ -100,8 +100,9 @@ def predict(for_speech_recognition = False, for_speech_synthesis = False):
 
     pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
 
-    print('[i] Инициализация языковой модели...')
-    sr = SpeechRecognition('from_microphone')
+    if for_speech_recognition:
+        print('[i] Инициализация языковой модели...')
+        sr = SpeechRecognition('from_microphone')
 
     print('\n')
     quest = ''
@@ -118,6 +119,8 @@ def predict(for_speech_recognition = False, for_speech_synthesis = False):
         if for_speech_synthesis == True:
             tts(answer, 'playback')
 
+# Попробовать в качестве центральной сети использовать pynlc или chatterbot (что бы была поддержка сценария и некоторого контекста, который можно 
+# брать из БД)
 
 def main():
     curses.setupterm()

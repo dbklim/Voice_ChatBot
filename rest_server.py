@@ -31,19 +31,23 @@ from tensorflow import get_default_graph
 from preprocessing import Preparation
 from prediction import Prediction
 from text_to_speech import tts
-from speech_to_text import SpeechRecognition            
+from speech_to_text import SpeechRecognition
 
-
-# Удаление старых логов
-if os.path.exists('server.log'):
-    os.remove('server.log')
-    for i in range(1,6):
-        if os.path.exists('server.log.' + str(i)):
-            os.remove('server.log.' + str(i))
 
 # Создание временной папки, если она была удалена
 if os.path.exists('temp') == False:
     os.makedirs('temp')
+
+# Создание папки для логов, если она была удалена
+if os.path.exists('log') == False:
+    os.makedirs('log')
+
+# Удаление старых логов
+if os.path.exists('log/server.log'):
+    os.remove('log/server.log')
+    for i in range(1,6):
+        if os.path.exists('log/server.log.' + str(i)):
+            os.remove('log/server.log.' + str(i))
 
 # Конфигурация логгера
 dictConfig({
@@ -66,7 +70,7 @@ dictConfig({
             'maxBytes' : 16 * 1024 * 1024,
             'backupCount' : 5,
             'formatter' : 'simple',
-            'filename' : 'server.log'
+            'filename' : 'log/server.log'
         }
     },
     'loggers' : {
@@ -208,7 +212,8 @@ def speech_to_text():
         audiofile.write(audio)
 
     log('принят .{} размером {:.2f} кБ, сохранено в temp/question.{}'.format(audio_format, len(audio)/1024, audio_format), request.remote_addr)    
-    question = sr.stt('temp/question.' + audio_format)
+    question = sr.stt('temp/question.' + audio_format) # Первый раз распознаёт не очень, т.к. параллельно подстраиваются фильтры и т.д
+    question = sr.stt('temp/question.' + audio_format) # Когда второй раз одну и ту же фразу - распознавание куда лучше
 
     if question == 'error':
         log('json в теле запроса содержит некорректные данные', request.remote_addr, 'error')
@@ -301,9 +306,9 @@ def run(host, port, wsgi = False, https_mode = False):
     if wsgi:
         global http_server
         if https_mode:
-            log('WSGI сервер запущен на https://' + host + ':' + str(port))
+            log('WSGI сервер запущен на https://' + host + ':' + str(port) + ' (нажмите Ctrl+C или Ctrl+Z для выхода)')
         else:
-            log('WSGI сервер запущен на http://' + host + ':' + str(port))
+            log('WSGI сервер запущен на http://' + host + ':' + str(port) + ' (нажмите Ctrl+C или Ctrl+Z для выхода)')
         try:
             if https_mode:
                 http_server = WSGIServer((host, port), app, log=app.logger, error_log=app.logger, keyfile='key.pem', certfile='cert.pem')
@@ -327,18 +332,26 @@ def run(host, port, wsgi = False, https_mode = False):
 
 def get_address_on_local_network():
     ''' Определение адреса машины в локальной сети с помощью выполнения ifconfig | grep 'inet addr'
-    1. возвращает строку с адресом '''
+    1. возвращает строку с адресом или 127.0.0.1, если локальный адрес начинается не с 192.Х.Х.Х или 172.Х.Х.Х '''
 
     command_line = "ifconfig | grep 'inet addr'"
     proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
     out = out.decode()
-    while True:
+    if out.find('command not found') != -1:
+        print("\n[E] 'ifconfig' не найден.")
+        sys.exit(0)
+    i = 0
+    while True:    
         out = out[out.find('inet addr:') + len('inet addr:'):]
         host = out[:out.find(' ')]
         out = out[out.find(' '):]
-        if host.find('192.168.') != -1:
+        if host.find('192.') != -1 or host.find('172.') != -1:
             return host
+        i += 1
+        if i >= 10:
+            print("\n[E] Неподдерживаемый формат локального адреса, требуется корректировка исходного кода.\n")
+            return '127.0.0.1'
 
 
 def on_stop(*args):
