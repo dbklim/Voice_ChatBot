@@ -41,7 +41,7 @@ sudo ldconfig
 162 env.AppendUnique(CXXFLAGS=["-std=c++11"])
 163 env.AppendUnique(CXXFLAGS=["-Wno-deprecated-declarations"])
 
-3. Пересобрать всё, используя:
+3. Пересобрать всё, используя (если не получилось по основной инструкции):
 scons -j8 prefix=/usr
 sudo scons prefix=/usr install
 sudo ldconfig
