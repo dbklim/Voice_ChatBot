@@ -14,6 +14,7 @@ ldconfig
 
 PACKAGES="decorator flask==1.0.2 flask-httpauth==3.2.4 gensim gevent==1.3.7 h5py keras matplotlib numpy pocketsphinx pydub simpleaudio requests git+https://github.com/datalogai/recurrentshop.git git+https://github.com/farizrahman4u/seq2seq.git"
 # Установка пакетов Python3
+yes | pip3 install --upgrade pip
 yes | pip3 install $PACKAGES
 
 # Установка CMUclmtk_v0.7
