@@ -206,19 +206,17 @@ def speech_to_text():
         if audio == None:
             log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
             return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
-
     audio = base64.b64decode(audio)
     with open('temp/question.' + audio_format, 'wb') as audiofile:
         audiofile.write(audio)
+    log('принят .{} размером {:.2f} кБ, сохранено в temp/question.{}'.format(audio_format, len(audio)/1024, audio_format), request.remote_addr)  
 
-    log('принят .{} размером {:.2f} кБ, сохранено в temp/question.{}'.format(audio_format, len(audio)/1024, audio_format), request.remote_addr)    
     question = sr.stt('temp/question.' + audio_format) # Первый раз распознаёт не очень, т.к. параллельно подстраиваются фильтры и т.д
     question = sr.stt('temp/question.' + audio_format) # Когда второй раз одну и ту же фразу - распознавание куда лучше
 
     if question == 'error':
         log('json в теле запроса содержит некорректные данные', request.remote_addr, 'error')
         return make_response(jsonify({'error': 'Json in the request body contains incorrect data.'}), 415)
-
     log("распознано: '" + question + "'", request.remote_addr)
     return jsonify({'text':question})
 
@@ -234,11 +232,11 @@ def text_to_speech():
         log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
         return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
     log("принято: '" + data + "'", request.remote_addr)
+
     tts(data, 'into_file', 'temp/answer.wav')
 
     with open('temp/answer.wav', 'rb') as audiofile:
-        audio = audiofile.read()
-    
+        audio = audiofile.read()    
     log('создан .wav размером {:.2f} кБ, сохранено в temp/answer.wav'.format(len(audio)/1024), request.remote_addr)
     audio = base64.b64encode(audio)
     return jsonify({'wav':audio.decode()})
@@ -255,8 +253,10 @@ def text_to_text():
         log('json в теле запроса имеет неправильную структуру', request.remote_addr, 'error')
         return make_response(jsonify({'error': 'Json in the request body has an invalid structure.'}), 415)
     log("принято: '" + data + "'", request.remote_addr)
+
     with graph.as_default():
         answer = pr.predict(data)
+
     log("ответ: '" + answer + "'", request.remote_addr)
     return jsonify({'text':answer})
 
@@ -331,7 +331,7 @@ def run(host, port, wsgi = False, https_mode = False):
 
 
 def get_address_on_local_network():
-    ''' Определение адреса машины в локальной сети с помощью выполнения ifconfig | grep 'inet addr'
+    ''' Определение адреса машины в локальной сети с помощью выполнения "ifconfig | grep 'inet addr'".
     1. возвращает строку с адресом или 127.0.0.1, если локальный адрес начинается не с 192.Х.Х.Х или 172.Х.Х.Х '''
 
     command_line = "ifconfig | grep 'inet addr'"
@@ -342,31 +342,31 @@ def get_address_on_local_network():
         print("\n[E] 'ifconfig' не найден.")
         sys.exit(0)
     i = 0
-    while True:    
+    host_192xxx = None
+    host_172xxx = None
+    while host_192xxx == None or host_172xxx == None:    
         out = out[out.find('inet addr:') + len('inet addr:'):]
         host = out[:out.find(' ')]
         out = out[out.find(' '):]
-        if host.find('192.') != -1 or host.find('172.') != -1:
-            return host
+        if host.find('192.168') != -1:
+            host_192xxx = host
+        elif host.find('172.') != -1:
+            host_172xxx = host
         i += 1
         if i >= 10:
-            print("\n[E] Неподдерживаемый формат локального адреса, требуется корректировка исходного кода.\n")
-            return '127.0.0.1'
+            break
+    if host_192xxx:
+        return host_192xxx
+    elif host_172xxx:
+        return host_172xxx
+    else:
+        print("\n[E] Неподдерживаемый формат локального адреса, требуется корректировка исходного кода.\n")
+        return '127.0.0.1'
 
+# Добавить админку (которая будет отдавать простую html, в которой можно тестировать все запросы)
+# Добавить запись необработанных слов в отдельный файл и конфиг-файл
 
-def on_stop(*args):
-    print()
-    log('сервер остановлен')
-    if http_server != None:
-        http_server.close()
-    sys.exit(0)
-
-
-if __name__ == '__main__':
-    # При нажатии комбинаций Ctrl+Z, Ctrl+C либо закрытии терминала будет вызываться функция on_stop() (Работает только на linux системах!)
-    if platform.system() == "Linux":
-        for sig in (signal.SIGTSTP, signal.SIGINT, signal.SIGTERM):
-            signal.signal(sig, on_stop)
+def main():
     host = '127.0.0.1'
     port = 5000
     
@@ -451,6 +451,24 @@ if __name__ == '__main__':
         host = get_address_on_local_network()
         run(host, port, wsgi=True)
 
+
+
+
+def on_stop(*args):
+    print()
+    log('сервер остановлен')
+    if http_server != None:
+        http_server.close()
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    # При нажатии комбинаций Ctrl+Z, Ctrl+C либо закрытии терминала будет вызываться функция on_stop() (Работает только на linux системах!)
+    if platform.system() == "Linux":
+        for sig in (signal.SIGTSTP, signal.SIGINT, signal.SIGTERM):
+            signal.signal(sig, on_stop)
+    main()
+    
 '''
 if sys.argv[1].count('*') > 0: # для задания максимальной длины принимаемых данных в виде выражения 
     print('это выражение!')
