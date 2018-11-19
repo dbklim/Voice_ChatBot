@@ -12,7 +12,7 @@ from preprocessing import Preparation
 from coder_w2v import CoderW2V
 
 import seq2seq
-from seq2seq.models import SimpleSeq2Seq
+from seq2seq.models import SimpleSeq2Seq, AttentionSeq2Seq
 import numpy as np
 import re
 import sys
@@ -30,7 +30,8 @@ class Prediction:
 
         _input_dim, _hidden_dim, _output_length, _output_dim, _depth, _loss, _optimizer = self.__load_simpleseq2seq_model(filename_net_model)
         
-        self.model = SimpleSeq2Seq(input_dim = _input_dim, hidden_dim = _hidden_dim, output_length = _output_length, output_dim = _output_dim, depth = _depth)
+        #self.model = SimpleSeq2Seq(input_dim = _input_dim, hidden_dim = _hidden_dim, output_length = _output_length, output_dim = _output_dim, depth = _depth)
+        self.model = AttentionSeq2Seq(input_dim = _input_dim, hidden_dim = _hidden_dim, input_length = _output_length, output_length = _output_length, output_dim = _output_dim, depth = _depth)
         self.model.compile(loss = _loss, optimizer = _optimizer)
         self.model.load_weights(filename_net_weights)
 

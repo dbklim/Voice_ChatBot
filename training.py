@@ -13,7 +13,7 @@ import os
 import numpy as np
 from keras import __version__ as keras_version
 import seq2seq
-from seq2seq.models import SimpleSeq2Seq
+from seq2seq.models import SimpleSeq2Seq, AttentionSeq2Seq
 
 
 class Training:
@@ -40,15 +40,13 @@ class Training:
         print('\tразмер входа: %i' % vec_size)
 
         print('[i] Построение сети...')
-
-        model = SimpleSeq2Seq(input_dim = vec_size, hidden_dim = vec_size, output_length = sequence_length, output_dim = vec_size, depth = depth_model)
+        #model = SimpleSeq2Seq(input_dim = vec_size, hidden_dim = vec_size, output_length = sequence_length, output_dim = vec_size, depth = depth_model)
+        model = AttentionSeq2Seq(input_dim = vec_size, hidden_dim = vec_size, input_length=sequence_length, output_length = sequence_length, output_dim = vec_size, depth = depth_model)
         model.compile(loss = 'mse', optimizer = 'rmsprop')       
-        self.__save_simpleseq2seq_model(filename_model, vec_size, vec_size, sequence_length, vec_size, depth_model, 'mse', 'rmsprop')
+        self.__save_seq2seq_model(filename_model, vec_size, vec_size, sequence_length, vec_size, depth_model, 'mse', 'rmsprop')
 
-        print('[i] Обучение сети...')
-        
+        print('[i] Обучение сети...')        
         path_for_out = filename_in[:filename_in.find('/') + 1]
-
         for i in range(1, number_training_cycles + 1):
             model.fit(Q, A, epochs = number_epochs)
             print('\n[i] Сохранение промежуточного результата %i/%i...\n' % (i, number_training_cycles))
@@ -63,7 +61,7 @@ class Training:
         print('[i] Обучение завершено')
         
 
-    def __save_simpleseq2seq_model(self, filename, input_dim, hidden_dim, output_length, output_dim, depth, loss, optimizer):
+    def __save_seq2seq_model(self, filename, input_dim, hidden_dim, output_length, output_dim, depth, loss, optimizer):
         ''' Сохранение параметров модели SimpleSeq2Seq и параметров компиляции (optimizer и loss) в .txt файл. '''
         file_w = open(filename, 'w')
         file_w.write('input_dim=%i\n' % input_dim)
