@@ -29,6 +29,7 @@ cd cmuclmtk-0.7
 make install
 cd -
 rm -rf cmuclmtk-0.7
+rm -rf cmuclmtk-0.7.tar.gz
 
 # Установка RHVoice
 tar -xf RHVoice.tar.gz
@@ -37,6 +38,7 @@ scons --config=force
 scons install
 cd -
 rm -rf RHVoice
+rm -rf RHVoice.tar.gz
 ldconfig
 # Если не найден RHVoice-client - см. "Install RHVoice.txt"
 
