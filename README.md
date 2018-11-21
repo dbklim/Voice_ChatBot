@@ -11,7 +11,7 @@
 ./install_packages.sh gpu
 ```
 
-Если в процессе установки RHVoice или CMUclmtk что-то пошло не так, вы можете установить и настроить их вручную используя инструкции в `Install RHVoice.txt` и `Install CMUclmtk.txt`.
+Если вы не можете или не хотите воспользоваться скриптом для установки всех необходимых пакетов, нужно вручную установить RHVoice и CMUclmtk, используя инструкции в `Install RHVoice.txt` и `Install CMUclmtk.txt`. Так же необходимо скопировать файлы языковой, акустической модели и словаря для PocketSphinx из `temp/` в `/usr/local/lib/python3.5/dist-packages/pocketsphinx/model` (у вас путь к `python3.5` будет отличаться). Файлы языковой модели `prepared_questions.lm` и словаря `prepared_questions.dic` необходимо переименовать в `ru_bot.lm` и `ru_bot.dic` (либо заменить их название в `speech_to_text.py`).
 
 # Бот
 
