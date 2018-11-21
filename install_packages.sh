@@ -12,13 +12,18 @@ PACKAGES="ffmpeg libav-tools x264 x265 python3.5 python3.5-dev python3-pip pytho
 apt-get -y --force-yes install $PACKAGES
 ldconfig
 
+# Очистка кеша
+apt-get -y autoremove
+apt-get -y autoclean
+apt-get -y clean
+
 PACKAGES="decorator flask==1.0.2 flask-httpauth==3.2.4 gensim gevent==1.3.7 h5py keras matplotlib numpy pocketsphinx pydub simpleaudio requests git+https://github.com/datalogai/recurrentshop.git git+https://github.com/farizrahman4u/seq2seq.git"
 # Установка пакетов Python3
 yes | pip3 install --upgrade pip
 yes | pip3 install $PACKAGES
 
 # Установка CMUclmtk_v0.7
-wget https://netcologne.dl.sourceforge.net/project/cmusphinx/cmuclmtk/0.7/cmuclmtk-0.7.tar.gz -O - | tar -xz
+tar -xf cmuclmtk-0.7.tar.gz
 cd cmuclmtk-0.7
 ./configure
 make install
@@ -26,7 +31,7 @@ cd -
 rm -rf cmuclmtk-0.7
 
 # Установка RHVoice
-git clone https://github.com/Olga-Yakovleva/RHVoice.git
+tar -xf RHVoice.tar.gz
 cd RHVoice
 scons --config=force
 scons install
@@ -35,9 +40,17 @@ rm -rf RHVoice
 ldconfig
 # Если не найден RHVoice-client - см. "Install RHVoice.txt"
 
+# Копирование языковой модели, словаря и акустической модели для PocketSphinx
+cd temp
+cp prepared_questions.lm /usr/local/lib/python3.5/dist-packages/pocketsphinx/model/ru_bot.lm
+cp prepared_questions.dic /usr/local/lib/python3.5/dist-packages/pocketsphinx/model/ru_bot.dic
+cp -r zero_ru.cd_cont_4000 /usr/local/lib/python3.5/dist-packages/pocketsphinx/model/zero_ru.cd_cont_4000
+rm -rf zero_ru.cd_cont_4000
+cd -
+
 if [[ $1 = 'gpu' ]]
 then 
-    yes | pip3 install tensorflow-gpu==1.12.0
+    yes | pip3 install tensorflow-gpu==1.7.0
     # install CUDA Toolkit v9.0
     # instructions from https://developer.nvidia.com/cuda-downloads (linux -> x86_64 -> Ubuntu -> 16.04 -> deb)
     CUDA_REPO_PKG="cuda-repo-ubuntu1604-9-0-local_9.0.176-1_amd64-deb"
@@ -66,5 +79,5 @@ then
     export CUDA_HOME=${CUDA_HOME}:/usr/local/cuda:/usr/local/cuda-9.0
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda-9.0/lib64
 else 
-    yes | pip3 install tensorflow==1.12.0
+    yes | pip3 install tensorflow==1.7.0
 fi

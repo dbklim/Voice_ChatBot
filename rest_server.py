@@ -338,7 +338,7 @@ def get_address_on_local_network():
     proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
     out = out.decode()
-    if out.find('command not found') != -1:
+    if out.find('not found') != -1:
         print("\n[E] 'ifconfig' не найден.")
         sys.exit(0)
     i = 0
@@ -365,6 +365,7 @@ def get_address_on_local_network():
 
 # Добавить админку (которая будет отдавать простую html, в которой можно тестировать все запросы)
 # Добавить запись необработанных слов в отдельный файл и конфиг-файл
+# Попробовать распознавание речи с помощью Kaldi
 
 def main():
     host = '127.0.0.1'
@@ -450,8 +451,6 @@ def main():
     else: # запуск WSGI сервера с автоопределением адреса машины в локальной сети и портом 5000
         host = get_address_on_local_network()
         run(host, port, wsgi=True)
-
-
 
 
 def on_stop(*args):
