@@ -13,7 +13,12 @@ data/*.png
 text2dict/my_dictionary.txt
 text2dict/my_dictionary_out.txt
 text2dict/my_dictionary_out.txt.accent
-temp/
+temp/*.wav
+temp/*.opus
+temp/*.raw
+temp/*.txt
+temp/*.idngram
+temp/*.accent
 log/
 *.wav
 *.raw
