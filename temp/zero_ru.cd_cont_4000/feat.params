@@ -1,0 +1,9 @@
+-dither yes
+-nfilt 31
+-lowerf 130
+-upperf 3700
+-feat 1s_c_d_dd
+-agc none
+-cmn current
+-varnorm no
+-cmninit 11.64,0.15,-0.04,0.17,-0.40,-0.03,-0.50,-0.13,-0.33,-0.11,-0.19,-0.10,-0.24
