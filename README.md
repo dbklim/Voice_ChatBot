@@ -2,11 +2,11 @@
 
 Проект состоит из двух частей - голосовой бот и RESTful сервер для взаимодействия с ним.
 
-Для запуска бота локально нужно выполнить `python3 bot.py` (или `run_bot.sh`) и в предложенном меню выбрать желаемый вариант работы ([подробнее тут](https://github.com/Desklop/Voice_ChatBot#%D0%B1%D0%BE%D1%82)).
+Для запуска бота локально нужно выполнить `python3 bot.py` (или `run_bot.sh`) и в предложенном меню выбрать желаемый вариант работы ([подробнее тут](https://github.com/Desklop/Voice_ChatBot#%бот)).
 
-Для запуска RESTful сервера, предоставляющего интерфейс для взаимодействия с модулями голосового бота, нужно выполнить `python3 rest_server.py` (или `run_rest_server.sh`) ([подробнее тут](https://github.com/Desklop/Voice_ChatBot#restful-%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80)).
+Для запуска RESTful сервера, предоставляющего интерфейс для взаимодействия с модулями голосового бота, нужно выполнить `python3 rest_server.py` (или `run_rest_server.sh`) ([подробнее тут](https://github.com/Desklop/Voice_ChatBot#restful-сервер)).
 
-Для сборки docker-образа на основе RESTful сервера выполните `sudo docker build -t voice_chatbot:0.1 .` ([подробнее тут](https://github.com/Desklop/Voice_ChatBot#Docker-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%20%D1%81%20RESTful%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%BE%D0%BC)).
+Для сборки docker-образа на основе RESTful сервера выполните `sudo docker build -t voice_chatbot:0.1 .` ([подробнее тут](https://github.com/Desklop/Voice_ChatBot#docker-образ-с-restful-сервером)).
 
 ## Зависимости
 
