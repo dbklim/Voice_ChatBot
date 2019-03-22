@@ -1,85 +1,48 @@
 #!/bin/bash
-# Начальное обновление системы
 apt-get -y update
 apt-get -y --force-yes dist-upgrade
-# Список репозиториев
-add-apt-repository ppa:jonathonf/ffmpeg-3
-# Обновление информации о пакетах
-apt-get -y update
 
-PACKAGES="ffmpeg libav-tools x264 x265 python3.5 python3.5-dev python3-pip python3-tk python3-setuptools make git scons gcc pkg-config pulseaudio libpulse-dev portaudio19-dev libglibmm-2.4-dev libasound-dev libao4 libao-dev sonic sox swig flite1-dev net-tools dbus-x11"
+PACKAGES="ffmpeg x264 x265 python3.6 python3.6-dev python3-pip python3-setuptools make git scons gcc pkg-config pulseaudio libpulse-dev portaudio19-dev libglibmm-2.4-dev libasound-dev libao4 libao-dev sonic sox swig flite1-dev net-tools zip unzip"
 # Установка пакетов Ubuntu
 apt-get -y --force-yes install $PACKAGES
-ldconfig
 
-# Очистка кеша
-apt-get -y autoremove
-apt-get -y autoclean
-apt-get -y clean
-
-PACKAGES="decorator flask==1.0.2 flask-httpauth==3.2.4 gensim gevent==1.3.7 h5py keras matplotlib numpy pocketsphinx pydub simpleaudio requests git+https://github.com/datalogai/recurrentshop.git git+https://github.com/farizrahman4u/seq2seq.git"
+PACKAGES="decorator flask>=1.0.2 flask-httpauth>=3.2.4 gensim gevent>=1.3.7 h5py keras matplotlib numpy pocketsphinx pydub simpleaudio requests git+https://github.com/datalogai/recurrentshop.git git+https://github.com/Desklop/seq2seq.git"
 # Установка пакетов Python3
 yes | pip3 install --upgrade pip
 yes | pip3 install $PACKAGES
 
 # Установка CMUclmtk_v0.7
-tar -xf cmuclmtk-0.7.tar.gz
+unzip install_files/cmuclmtk-0.7.zip
 cd cmuclmtk-0.7
 ./configure
+make
 make install
 cd -
 rm -rf cmuclmtk-0.7
-rm -rf cmuclmtk-0.7.tar.gz
 
 # Установка RHVoice
-tar -xf RHVoice.tar.gz
+unzip install_files/RHVoice.zip
 cd RHVoice
 scons --config=force
 scons install
 cd -
 rm -rf RHVoice
-rm -rf RHVoice.tar.gz
 ldconfig
-# Если не найден RHVoice-client - см. "Install RHVoice.txt"
+# Если не найден RHVoice-client - см. "install_files/Install RHVoice.txt"
 
 # Копирование языковой модели, словаря и акустической модели для PocketSphinx
 cd temp
-cp prepared_questions.lm /usr/local/lib/python3.5/dist-packages/pocketsphinx/model/ru_bot.lm
-cp prepared_questions.dic /usr/local/lib/python3.5/dist-packages/pocketsphinx/model/ru_bot.dic
-cp -r zero_ru.cd_cont_4000 /usr/local/lib/python3.5/dist-packages/pocketsphinx/model/zero_ru.cd_cont_4000
-rm -rf zero_ru.cd_cont_4000
+cp prepared_questions_plays_ru.lm /usr/local/lib/python3.6/dist-packages/pocketsphinx/model/ru_bot_plays_ru.lm
+cp prepared_questions_plays_ru.dic /usr/local/lib/python3.6/dist-packages/pocketsphinx/model/ru_bot_plays_ru.dic
+cp -r zero_ru.cd_cont_4000 /usr/local/lib/python3.6/dist-packages/pocketsphinx/model/zero_ru.cd_cont_4000
 cd -
 
 if [[ $1 = 'gpu' ]]
 then 
-    yes | pip3 install tensorflow-gpu==1.7.0
-    # install CUDA Toolkit v9.0
-    # instructions from https://developer.nvidia.com/cuda-downloads (linux -> x86_64 -> Ubuntu -> 16.04 -> deb)
-    CUDA_REPO_PKG="cuda-repo-ubuntu1604-9-0-local_9.0.176-1_amd64-deb"
-    wget https://developer.nvidia.com/compute/cuda/9.0/Prod/local_installers/${CUDA_REPO_PKG}
-    sudo dpkg -i ${CUDA_REPO_PKG}
-    sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
-    sudo apt-get update
-    sudo apt-get -y install cuda-9-0
-    
-    CUDA_PATCH1="cuda-repo-ubuntu1604-9-0-local-cublas-performance-update_1.0-1_amd64-deb"
-    wget https://developer.nvidia.com/compute/cuda/9.0/Prod/patches/1/${CUDA_PATCH1}
-    sudo dpkg -i ${CUDA_PATCH1}
-    sudo apt-get update
-    
-    # install cuDNN v7.0
-    CUDNN_PKG="libcudnn7_7.0.5.15-1+cuda9.0_amd64.deb"
-    wget https://github.com/ashokpant/cudnn_archive/raw/master/v7.0/${CUDNN_PKG}
-    sudo dpkg -i ${CUDNN_PKG}
-    sudo apt-get update
-    
-    # install NVIDIA CUDA Profile Tools Interface (libcupti-dev v9.0)
-    sudo apt-get install cuda-command-line-tools-9-0
-    
-    # set environment variables
-    export PATH=${PATH}:/usr/local/cuda-9.0/bin
-    export CUDA_HOME=${CUDA_HOME}:/usr/local/cuda:/usr/local/cuda-9.0
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda-9.0/lib64
+    yes | pip3 install tensorflow-gpu
+    ./install_files/download_CUDA10.0_cuDNN.sh
+    ./install_files/Install_CUDA10.0_cuDNN/install.sh
+    rm -rf install_files/Install_CUDA10.0_cuDNN
 else 
-    yes | pip3 install tensorflow==1.7.0
+    yes | pip3 install tensorflow
 fi

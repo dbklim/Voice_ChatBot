@@ -1,25 +1,23 @@
 __pycache__/
 .vscode/
-data/prepared_data.txt
+data/conversations_ru/source_conversations_ru.txt
+data/conversations_ru/conversations_ru_3k.txt
+data/conversations_ru/w2v_vocabulary_conversations_ru.txt
+data/conversations_ru/wrong_answers_conversations_ru.txt
+data/plays_ru/w2v_vocabulary_plays_ru.txt
+data/plays_ru/wrong_answers_plays_ru.txt
+data/subtitles_ru/source_subtitles_ru.txt
+data/subtitles_ru/w2v_vocabulary_subtitles_ru.txt
+data/subtitles_ru/wrong_answers_subtitles_ru.txt
 data/w2v_vocabulary.txt
 data/w2v_neighborhood.txt
-data/old горе от ума.txt
-data/old скотный двор.txt
-data/*.pkl
-data/*.npz
+data/*.txt
+data/*.json
 data/*.h5
 !data/net_final_weights.h5
 data/*.png
-text2dict/my_dictionary.txt
-text2dict/my_dictionary_out.txt
-text2dict/my_dictionary_out.txt.accent
-temp/*.wav
-temp/*.opus
 temp/*.raw
 temp/*.txt
 temp/*.idngram
 temp/*.accent
 log/
-*.wav
-*.raw
-*.log

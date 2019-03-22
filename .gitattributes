@@ -1,1 +1,7 @@
-RHVoice.tar.gz filter=lfs diff=lfs merge=lfs -text
+install_files/RHVoice.zip filter=lfs diff=lfs merge=lfs -text
+data/conversations_ru/w2v_model_conversations_ru.bin filter=lfs diff=lfs merge=lfs -text
+data/plays_ru/w2v_model_plays_ru.bin filter=lfs diff=lfs merge=lfs -text
+data/subtitles_ru/subtitles_ru.txt filter=lfs diff=lfs merge=lfs -text
+data/subtitles_ru/prepared_subtitles_ru.pkl filter=lfs diff=lfs merge=lfs -text
+data/subtitles_ru/encoded_subtitles_ru.npz filter=lfs diff=lfs merge=lfs -text
+data/subtitles_ru/w2v_model_subtitles_ru.bin filter=lfs diff=lfs merge=lfs -text

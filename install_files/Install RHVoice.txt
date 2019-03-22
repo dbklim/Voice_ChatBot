@@ -1,0 +1,116 @@
+Установка RHVoice вручную, если скрипт install_packages.sh не сработал или вы используете не Ubuntu.
+
+=============================================================================================================================
+
+Установка необходимых библиотек:
+sudo apt-get update
+sudo apt-get install scons gcc pkg-config pulseaudio
+
+Дополнительные библиотеки, без которых scons не соберёт проект:
+sudo apt-get install libpulse-dev (это для libpulse-simple)
+sudo apt-get install portaudio19-dev (это для portaudio-2.0)
+sudo apt-get install libglibmm-2.4-dev (это для giomm-2.4)
+sudo apt-get install libasound-dev (это для ao)
+sudo apt-get install sonic sox
+
+Если чего-то нет или не ставится, попробовать что-то из этого:
+sudo apt-get install libpulse-dev libao-dev libportaudio-dev libgtkmm-2.4-dev
+
+Установка самого RHVoice:
+git clone https://github.com/Olga-Yakovleva/RHVoice.git
+cd RHVoice
+scons --config=force
+sudo scons install
+sudo ldconfig
+
+При сборки scons лучше использовать scons --config=force 
+
+Теперь можно его использовать.
+
+=============================================================================================================================
+
+Если недоступна команда RHVoice-client, необходимо:
+1. В файле SConstruct в корне папки RHVoice раскомментировать строку 264
+264 has_giomm=conf.CheckPKG("giomm-2.4")
+
+2. В том же файле в районе строки 208 найти env.AppendUnique(CXXFLAGS=["-std=c++03"]) и изменить на (добавить ещё одну строку)
+208 env.AppendUnique(CXXFLAGS=["-std=c++11"])
+209 env.AppendUnique(CXXFLAGS=["-Wno-deprecated-declarations"])
+
+3. Пересобрать всё, используя (если не получилось по основной инструкции):
+scons -j8 prefix=/usr
+sudo scons prefix=/usr install
+sudo ldconfig
+
+=============================================================================================================================
+
+Примеры:
+echo "Проверка синтезатора речи" | RHVoice-client -s Anna+CLB | aplay
+echo "Проверка синтезатора речи" | RHVoice-client -s Anna+CLB >/tmp/test.wav
+echo "проверка" | RHVoice-client -s Anna+CLB |sox -t wav - -r 32000 -c 1 -b 16 -t wav - >/tmp/test.wav
+
+=== Голоса ===
+Русский
+  aleksandr (муж.)
+  anna (жен.)
+  elena (жен.)
+  irina (жен.)
+
+Английский
+  alan (муж.)
+  clb (жен.)
+  slt (жен.)
+
+Грузинский
+  natia (жен.)
+
+Эсперанто
+  spomenka (жен.)
+
+=============================================================================================================================
+
+Конфигурационный файл лежит в /usr/local/etc/RHVoice/RHVoice.conf
+Там можно поменять параметры синтезатора для каждого голоса отдельно. Примеры параметров в RHVoice.conf в репозитории или 
+исходной папке.
+https://github.com/Olga-Yakovleva/RHVoice/wiki/Configuration-file-(Russian)
+Что бы изменения вступили в силу, нужно убить процесс.
+
+=============================================================================================================================
+
+Для использования через speech-dispatcher:
+cp   sd_rhvoice    /usr/lib/speech-dispatcher-modules
+добавить rhvoice.conf в /etc/speech-dispatcher/modules/ :
+
+# Data
+RHVoiceDataPath "/usr/local/share/RHVoice"
+RHVoiceConfigPath "/usr/local/etc/RHVoice/"
+
+# Punctuation
+
+RHVoicePunctuationMode 0
+#RHVoicePunctuationList "@+_"
+
+# Default Voice
+RHVoiceDefaultVoice "Aleksandr"
+RHVoiceDefaultVariant "Pseudo-English"
+
+
+# Debugging
+Debug 1
+
+нужно прописать модуль в speechd.conf
+можно проверить с помощью spd-say
+
+
+Как модуль speech-dispatcher:
+   sudo apt-get install speech-dispatcher-rhvoice rhvoice-russian
+   sudo apt-get install rhvoice-english если нужен и английский
+
+
+Проверка:
+echo "Проверка синтезатора речи" | spd-say -o rhvoice -l ru -e -t female1
+
+
+
+
+

@@ -1,54 +1,91 @@
-#!/usr/bin/python3 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#       OS : GNU/Linux Ubuntu 16.04 
-# COMPILER : Python 3.5.2
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#       OS : GNU/Linux Ubuntu 16.04 or 18.04
+# LANGUAGE : Python 3.5.2 or later
 #   AUTHOR : Klim V. O.
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-from preprocessing import Preparation
-from coder_w2v import CoderW2V
-from training import Training
-from prediction import Prediction
-from text_to_speech import tts
-from speech_to_text import SpeechRecognition
-from preparing_speech_to_text import building_language_model
+'''
+Вопросно-ответный бот на основе нейросетевой модели seq2seq. Поддерживает общение
+в текстовом формате, с синтезом (RHVoice) и распознаванием (PocketSphinx) речи.
+'''
 
 import sys
 import signal
 import platform
 import curses
 import os
-import time
+from text_to_text import TextToText
+from text_to_speech import TextToSpeech
+from speech_to_text import SpeechToText
+from preparing_speech_to_text import LanguageModel
 
 
-f_source_data = 'data/source_data.txt'
-f_prepared_data = 'data/prepared_data.txt'
-f_prepared_data_pkl = 'data/prepared_data.pkl'
-f_encoded_data = 'data/encoded_data.npz'
-f_w2v_model = 'data/w2v_model.bin'
-f_w2v_vocab = 'data/w2v_vocabulary.txt'
-f_w2v_nbhd = 'data/w2v_neighborhood.txt'
-f_net_model = 'data/net_model.txt'
-f_net_weights = 'data/net_final_weights.h5'
+f_name_source_data = 'data/plays_ru/plays_ru.txt'
+f_name_training_sample = 'data/plays_ru/prepared_plays_ru.pkl'
+f_name_enc_training_sample = 'data/plays_ru/encoded_plays_ru.npz'
+f_name_w2v_model = 'data/plays_ru/w2v_model_plays_ru.bin'
+f_name_w2v_vocab = 'data/plays_ru/w2v_vocabulary_plays_ru.txt'
+f_name_model = 'data/plays_ru/model_plays_ru.json'
+f_name_model_weights = 'data/plays_ru/model_weights_plays_ru.h5'
+
+
+curses.setupterm()
+
+
+def configure_file_names():
+    ''' Запрашивает выбор одного из наборов данных (plays_ru, conversations_ru и subtitles_ru), корректирует имена файлов
+    и возвращает имя выбранного набора данных. '''
+    print('[i] Выберите набор данных:')
+    print('\t1. plays_ru - набор диалогов из пьес')
+    print('\t2. conversations_ru - набор диалогов из различных произведений')
+    print('\t3. subtitles_ru - набор диалогов из субтитров к 347 сериалам')
+    print('[W] conversations_ru и subtitles_ru ещё в разработке!')
+    while True:
+        choice = input('\rВаш выбор: ')
+        if choice == '1':
+            name_dataset = 'plays_ru'
+            break
+        elif choice == '2':
+            name_dataset = 'conversations_ru'
+            break
+        elif choice == '3':
+            name_dataset = 'subtitles_ru'
+            break
+        else:
+            os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
+            print('                                     ', end='')
+
+    global f_name_source_data, f_name_training_sample, f_name_enc_training_sample, f_name_w2v_model, f_name_w2v_vocab, f_name_model, f_name_model_weights
+
+    f_name_source_data = 'data/' + name_dataset + '/' + name_dataset + '.txt'
+    f_name_training_sample = 'data/' + name_dataset + '/prepared_' + name_dataset + '.pkl'
+    f_name_enc_training_sample = 'data/' + name_dataset + '/encoded_' + name_dataset + '.npz'
+    f_name_w2v_model = 'data/' + name_dataset + '/w2v_model_' + name_dataset + '.bin'
+    f_name_w2v_vocab = 'data/' + name_dataset + '/w2v_vocabulary_' + name_dataset + '.txt'
+    f_name_model = 'data/' + name_dataset + '/model_' + name_dataset + '.json'
+    f_name_model_weights = 'data/' + name_dataset + '/model_weights_' + name_dataset + '.h5'
+    return name_dataset
 
 
 def train():
-    start_time = time.time()
-    prep = Preparation()
-    prep.prepare_all(f_source_data, f_prepared_data)
+    ''' Обучение модели seq2seq. '''
+    name_dataset = configure_file_names()
 
-    w2v = CoderW2V()
-    w2v.words2vec(f_prepared_data_pkl, f_encoded_data, f_w2v_model, f_w2v_vocab, f_w2v_nbhd, size = 500, epochs = 1000, window=5)
+    f_name_subtitles = None
+    f_name_prepared_subtitles = None
+    if name_dataset != 'subtitles_ru':
+        f_name_subtitles = 'data/subtitles_ru/subtitles_ru.txt'
+        f_name_prepared_subtitles = 'data/subtitles_ru/prepared_subtitles_ru.pkl'
 
-    t = Training()
-    t.train(f_encoded_data, f_net_model, 2, 100, 5)       
+    ttt = TextToText(train=True)
+    ttt.prepare(f_name_source_data, f_name_training_sample, f_name_subtitles, f_name_prepared_subtitles, f_name_enc_training_sample, f_name_w2v_model, 
+                f_name_w2v_vocab, len_encode=5000, size=500, epochs=500, logging=True)
+    ttt.train(f_name_enc_training_sample, f_name_model, f_name_model_weights, training_cycles=200, epochs=5)
 
-    pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
-    pr.assessment_training_accuracy(f_encoded_data)
-
-    print('\n[i] Общее время обучения: %.4f мин или %.4f ч' % ((time.time() - start_time)/60.0, ((time.time() - start_time)/60.0)/60.0))
-    
-    building_language_model(f_source_data)
+    lm = LanguageModel()
+    lm.build_language_model(f_name_source_data, 5000)
     
     # SimpleSeq2Seq
     # 248 входных фраз, epochs = 100
@@ -94,67 +131,48 @@ def train():
     # window = 10, 150 итераций, 5 эпох - точность 98.5% (1577 из 1601 правильных ответов), ошибка 0.0348
 
     # AttentionSeq2Seq
-    # 100 итераций, 5 эпох - точность 99.31% (1590 из 1601 правильных ответов), ошибка 0.0120
+    # 100 итераций, 5 эпох - точность 99.31% (1590 из 1601 правильных ответов), ошибка 0.0120 (размер вектора 500)
 
 
-# что ты - разъезжайтесь
-# что ты такое - успокойся
-# помоги мне - у смотрите мы не толку минуты?
-# привет любимая - привет, естью А - - тебя не
-# расскажи мне что-нибудь - а что - не смешно ночью иногда
-# ты веришь в бога - ,
-# ты машина - это ,
-# ты меня понимаешь - не и. Я я. Я я я не спросил
-# где ты живёшь - ещё почти думала
-# привет дорогая - здравствуй, это
-# что есть счастье - все то. Сказал не заметишь непохоже
-# ах как скучно - а не он утешительно
-# иди спать - танцмейстер отвертку в
-# кто такая софья - я то. Отключу
-# зачем хозяин оставил амбар открытым - что даже можно я не никому
-# где животные - давай тревожиться,
-# ты любишь себя - я знаю
-# кто я - очень так
-# зачем ты нужна - а я не людей
-# давай спать - пойдём, я
-# какой твой любимый цвет - не, что
-# софья - привет. В и,
-# ты софья - готов
-# где софья - я не родной и
-# ты не видишь смысл - не,
-# ты не видишь смысл в моих словах - не, а не
-
-def predict(for_speech_recognition = False, for_speech_synthesis = False):
+def predict(speech_recognition=False, speech_synthesis=False):
     ''' Работа с обученной моделью seq2seq.
-    1. for_speech_recognition - включение распознавания речи с микрофона с помощью PocketSphinx
-    2. for_speech_synthesis - включение озвучивания ответов с помощью RHVoice '''
+    1. speech_recognition - включение распознавания речи с микрофона с помощью PocketSphinx
+    2. speech_synthesis - включение озвучивания ответов с помощью RHVoice '''
+    name_dataset = configure_file_names()
 
-    pr = Prediction(f_net_model, f_net_weights, f_w2v_model)
+    ttt = TextToText(f_name_w2v_model=f_name_w2v_model, f_name_model=f_name_model, f_name_model_weights=f_name_model_weights)
 
-    if for_speech_recognition:
-        print('[i] Инициализация языковой модели...')
-        sr = SpeechRecognition('from_microphone')
+    if speech_recognition:
+        print('[i] Загрузка языковой модели для распознавания речи...')
+        stt = SpeechToText('from_microphone', name_dataset)
 
-    print('\n')
-    quest = ''
+    if speech_synthesis:
+        print('[i] Загрузка синтезатора речи...')
+        tts = TextToSpeech('anna')
+
+    print()
+    question = ''
     while(True):
-        if for_speech_recognition == True:        
+        if speech_recognition:
             print('Слушаю...')
-            quest = sr.stt()
+            question = stt.get()
             os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
-            print('Пользователь: ' + quest)
+            print('Вы: ' + question)
         else:
-            quest = input("Пользователь: ")
-        answer = pr.predict(quest)
-        print("\t=> %s\n" % answer)
-        if for_speech_synthesis == True:
-            tts(answer, 'playback')
+            question = input('Вы: ')
+        answer, lost_words = ttt.predict(question, True)
+        print('\t=> %s' % answer)
+        if len(lost_words) > 0:
+            print('[w] Потерянные слова: ' + ', '.join(lost_words) + '\n')
+        else:
+            print()
+        if speech_synthesis:
+            tts.get(answer)
 
-# Попробовать в качестве центральной сети использовать pynlc или chatterbot (что бы была поддержка сценария и некоторого контекста, который можно 
+# Попробовать в качестве центральной части использовать pynlc или chatterbot (что бы была поддержка сценария и некоторого контекста, который можно
 # брать из БД)
 
-def main():
-    curses.setupterm()
+def main():    
     if len(sys.argv) > 1:
         if sys.argv[1] == 'train':
             train()
@@ -190,6 +208,7 @@ def main():
             print('\tpredict -sr - включено распознавание речи с помощью PocketSphinx')
             print('\tpredict -ss -sr - включено озвучивание ответов и распознавание речи')
             print('\tpredict -sr -ss - включено озвучивание ответов и распознавание речи')
+            print('По умолчанию используется набор диалогов из пьес plays_ru.')
             sys.exit(0)
         else:
             print("[E] Неверный аргумент командной строки '" + sys.argv[1] + "'. Введите help для помощи.")
@@ -200,9 +219,9 @@ def main():
         print('\t2. predict - работа с обученной моделью seq2seq')
         print('\t3. predict -ss - включено озвучивание ответов с помощью RHVoice')
         print('\t4. predict -sr - включено распознавание речи с помощью PocketSphinx')
-        print('\t5. predict -ss -sr - включено озвучивание ответов и распознавание речи')
+        print('\t5. predict -ss -sr - включено озвучивание ответов и распознавание речи')        
         while True:
-            choice = input('Введите цифру: ')
+            choice = input('\rВаш выбор: ')
             if choice == '1':
                 choice = input('Вы уверены?(д/н) ')
                 if choice == 'д' or choice == 'y':
@@ -222,18 +241,19 @@ def main():
                 break
             else:
                 os.write(sys.stdout.fileno(), curses.tigetstr('cuu1'))
+                print('                                     ', end='')
 
 
 
 
 def on_stop(*args):
-    print("\n[i] Бот остановлен")
+    print('\n[i] Бот остановлен')
     sys.exit(0)
 
 
 if __name__ == '__main__':
     # При нажатии комбинаций Ctrl+Z, Ctrl+C либо закрытии терминала будет вызываться функция on_stop() (Работает только на linux системах!)
-    if platform.system() == "Linux":
+    if platform.system() == 'Linux':
         for sig in (signal.SIGTSTP, signal.SIGINT, signal.SIGTERM):
             signal.signal(sig, on_stop)
     main()

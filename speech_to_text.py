@@ -1,36 +1,41 @@
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#       OS : GNU/Linux Ubuntu 16.04 
-# COMPILER : Python 3.5.2
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#       OS : GNU/Linux Ubuntu 16.04 or 18.04
+# LANGUAGE : Python 3.5.2 or later
 #   AUTHOR : Klim V. O.
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 '''
-Предназначен для распознавания речи с помощью PocketSphinx.
+Распознавание речи с помощью PocketSphinx.
 '''
 
 import os
-import sys
-import re
 import subprocess
 from pydub import AudioSegment
 from pocketsphinx import Pocketsphinx, LiveSpeech, get_model_path
 
 
-class SpeechRecognition:
+class SpeechToText:
     ''' Предназначен для распознавания речи с помощью PocketSphinx.
     1. mode - может иметь два значения: from_file и from_microphone
-    1.1. from_file - распознавание речи из .wav файла (частота дискретизации 16кГц, 16bit, моно)
-    1.2. from_microphone - распознавание речи с микрофона '''
-    def __init__(self, mode):
+    1.1. from_file - распознавание речи из .wav файла (частота дискретизации >=16кГц, 16bit, моно)
+    1.2. from_microphone - распознавание речи с микрофона
+    2. name_dataset - имя набора данных, на основе которого построена языковая модель: plays_ru, subtitles_ru или conversations_ru '''
+    def __init__(self, mode='from_microphone', name_dataset='plays_ru'):
         self.current_dirname = os.path.dirname(os.path.realpath(__file__))
         self.work_mode = mode
         model_path = get_model_path()
 
+        if not (name_dataset == 'plays_ru' or name_dataset == 'subtitles_ru' or name_dataset == 'conversations_ru'):
+            print('\n[E] Неверное значение name_dataset. Возможные варианты: plays_ru, subtitles_ru или conversations_ru\n')
+            return
+
         if self.work_mode == 'from_file':
             config = {
                 'hmm': os.path.join(model_path, 'zero_ru.cd_cont_4000'),
-                'lm': os.path.join(model_path, 'ru_bot.lm'),
-                'dict': os.path.join(model_path, 'ru_bot.dic')
+                'lm': os.path.join(model_path, 'ru_bot_' + name_dataset + '.lm'),
+                'dict': os.path.join(model_path, 'ru_bot_' + name_dataset + '.dic')
             }
             self.speech_from_file = Pocketsphinx(**config)
         elif self.work_mode == 'from_microphone':
@@ -41,34 +46,32 @@ class SpeechRecognition:
                 no_search=False,
                 full_utt=False,
                 hmm=os.path.join(model_path, 'zero_ru.cd_cont_4000'),
-                lm=os.path.join(model_path, 'ru_bot.lm'),
-                dic=os.path.join(model_path, 'ru_bot.dic')
+                lm=os.path.join(model_path, 'ru_bot_' + name_dataset + '.lm'),
+                dic=os.path.join(model_path, 'ru_bot_' + name_dataset + '.dic')
             )
         else:
-            print('[E] Неподдерживаемый режим работы, проверьте значение переменной mode.')
-            return
+            print('[E] Неподдерживаемый режим работы, проверьте значение аргумента mode.')
 
     # Добавить фильтры шума, например с помощью sox
-
-    def stt(self, filename_audio = None):
+    def get(self, f_name_audio=None):
         ''' Распознавание речи с помощью PocketSphinx. Режим задаётся при создании объекта класса (из файла или с микрофона).
-        1. filename_audio - имя .wav или .opus файла с речью (частота дискретизации >=16кГц, 16bit, моно)
+        1. f_name_audio - имя .wav или .opus файла с речью (для распознавания из файла, частота дискретизации >=16кГц, 16bit, моно)
         2. возвращает строку с распознанной речью '''
 
-        if self.work_mode == 'from_file':            
-            if filename_audio == None:
+        if self.work_mode == 'from_file':
+            if f_name_audio is None:
                 print('[E] В режиме from_file необходимо указывать имя .wav или .opus файла.')
                 return
-            filename_audio_raw = filename_audio[:filename_audio.find('.')] + '.raw'
-            filename_audio_wav = filename_audio[:filename_audio.find('.')] + '.wav'
-            audio_format = filename_audio[filename_audio.find('.') + 1:]
+            filename_audio_raw = f_name_audio[:f_name_audio.find('.')] + '.raw'
+            filename_audio_wav = f_name_audio[:f_name_audio.find('.')] + '.wav'
+            audio_format = f_name_audio[f_name_audio.find('.') + 1:]
             
             # Конвертирование .opus файла в .wav
-            if audio_format == 'opus': 
-                command_line = "yes | ffmpeg -i '" + filename_audio + "' '" + filename_audio_wav + "'"
+            if audio_format == 'opus':
+                command_line = "yes | ffmpeg -i '" + f_name_audio + "' '" + filename_audio_wav + "'"
                 proc = subprocess.Popen(command_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = proc.communicate()
-                if err.decode().find(filename_audio + ':') != -1:
+                if err.decode().find(f_name_audio + ':') != -1:
                     return 'error'
 
             # Конвертирование .wav файла в .raw
@@ -89,12 +92,14 @@ class SpeechRecognition:
                 return str(phrase)
 
 
-def main():   
-    print('[i] Загрузка языковой модели... ', end = '')
-    sr = SpeechRecognition('from_microphone')
+
+
+def main():
+    print('[i] Загрузка языковой модели... ', end='')
+    stt = SpeechToText('from_microphone')
     print('ок')
     while True:
-        print(sr.stt())
+        print(stt.get())
 
 
 if __name__ == '__main__':

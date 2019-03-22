@@ -1,0 +1,13 @@
+__pycache__
+.vscode
+.git
+data/converations_ru
+data/subtitles_ru
+data/plays_ru/*.npz
+data/plays_ru/*.pkl
+data/plays_ru/*.png
+data/*.txt
+data/*.json
+data/*.h5
+.gitignore
+.gitattributes

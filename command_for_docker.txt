@@ -1,0 +1,87 @@
+Запустить контейнер (-t - запуск терминала, -i - интерактивный режим, --rm - удалить контейнер при завершении работы запускаемого приложения, -p 5000:5000 - пробросить все подключения на порт 5000 к машине-хосту в контейнер на порт 5000):
+sudo docker run -ti -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device=/dev/snd/controlC0 --privileged --rm -p 5000:5000 voice_chatbot:0.1 python3 rest_server.py 0.0.0.0:5000
+или
+sudo docker run --name=voice_bot -ti -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/vladislav/Проекты/temp:/work/Voice_ChatBot/log -e DISPLAY=unix$DISPLAY --device=/dev/snd/controlC0 --device=/dev/snd/pcmC0D0p --device=/dev/snd/seq --device=/dev/snd/timer --privileged --rm -p 5000:5000 voice_chatbot:0.1 python3 rest_server.py
+или
+sudo docker run -ti -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --rm -p 5000:5000 voice_chatbot:0.1 python3 rest_server.py
+или
+sudo docker run -ti --rm voice_chatbot:0.1 ./run_rest_server.sh
+
+Собрать образ с меткой voice_chatbot:0.1 на основе Dockerfile (. - директория, из которой вызывается docker build, точка - значит в текущей директории находятся все файлы для образа):
+sudo docker build -t voice_chatbot:0.1 .
+
+Сохранить образ вместе с внесёнными в него изменениями в .tar:
+sudo docker save voice_chatbot:0.1 > voice_chatbot.tar
+или
+sudo docker save voice_chatbot:0.1 -o voice_chatbot.tar
+
+Что бы распаковать образ (находясь с ним в одной директории):
+sudo docker load < voice_chatbot.tar
+или
+sudo docker load --input voice_chatbot.tar
+
+Переименовать образ:
+sudo docker tag 5e5bef1bdb53 voice_chatbot:0.1
+
+Сохранить контейнер в .tar:
+sudo docker export fd5e8b6eeb04 -o voice_chatbot.tar
+
+Загрузить контейнер из .tar:
+sudo docker import voice_chatbot.tar
+
+Удалить образ:
+sudo docker rmi voice_chatbot:0.1
+или
+sudo docker rmi d3e0c6c72e78
+
+Остановить контейнер:
+sudo docker stop d3e0c6c72e78
+
+Запуск остановленного контейнера:
+sudo docker start d3e0c6c72e78
+
+Подключиться к контейнеру:
+sudo docker attach d3e0c6c72e78
+
+Перезагрузка контейнера:
+sudo docker restart d3e0c6c72e78
+
+Удалить контейнер:
+sudo docker rm d3e0c6c72e78
+
+Список работающих контейнеров:
+sudo docker ps -a
+
+Список образов:
+sudo docker images
+
+Удалить все контейнеры и образы, очистить кеш:
+sudo docker system prune -a
+
+=========================================================================================================
+
+Собирал образ с помощью Dockerfile.
+Что бы распаковать образ (находясь с ним в одной директории):
+sudo docker load < voice_chatbot.tar
+или
+sudo docker load --input voice_chatbot.tar
+
+Перед запуском образа нужно выполнить в терминале "xhost +". Это необходимо, что бы можно было из контейнера получить доступ к X-серверу (он есть на всех популярных linux-системах), который в свою очередь разрешит docker доступ к D-bus, который нужен для работы RHVoice. Если этого не сделать, при обращении к RHVoice будет Dbus error. 
+
+Запускал так:
+1. Запуск REST-сервера (если не найден shost, необходимо установить net-tools) (поддерживаются все аргументы командной строки, что описаны в readme на гите https://github.com/Desklop/Voice_ChatBot):
+sudo docker run -ti -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --rm -p 5000:5000 voice_chatbot:v0.1 python3 rest_server.py
+Замечание: Что бы получить доступ к логам, необходимо добавить параметр -v /home/vladislav/Проекты/temp:/work/Voice_ChatBot/log (где вместо /home/vladislav/Проекты/temp нужно указать свой путь).
+
+2. Запуск только бота (не работает синтез и распознавание речи, т.к. они требуют доступ к звуковой карте, а команды --device не помогают) (--device=/dev/snd/pcmC0D0p --device=/dev/snd/seq --device=/dev/snd/timer тоже ничего не меняют):
+sudo docker run -ti -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device=/dev/snd/controlC0 --privileged --rm voice_chatbot:v0.1 python3 bot.py
+
+3. Так же можно запустить образ без параметров, что бы получить доступ к терминалу Ubuntu 16.04, которая лежит в основе данного образа:
+sudo docker run -ti -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --rm voice_chatbot:v0.1
+
+Замечания:
+1. Без -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY не будет работать RHVoice (он использует клиент-серверную архитектуру, что бы всякие программы для слабовидящих могли использовать его как модуль для синтеза речи).
+2. Запуск с --device=/dev/snd/controlC0 --privileged не исправляет ошибки доступа к звуковой карте (выводятся ошибки о том, что не найдено нужное аудио устройство). Этот же код, при запуске локально, работает естественно без ошибок (REST сервер работает нормально, т.к. синтез и распознавание речи осуществляется в файл/из файла). 
+3. На ОС, отличной от Ubuntu, вероятно нужно будет исправить пути в аргументах, про которые говорится в 1 и 2. 
+
+
