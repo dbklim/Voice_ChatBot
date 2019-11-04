@@ -284,12 +284,12 @@ def main():
     #w2v.build_word2vec(f_name_prepared_conversations, f_name_prepared_subtitles, len_encode=5000, size=500, epochs=None, logging=True)
     # size=500 или 1000 для набора данных из 1500-1600 обучающих пар, если size=300 - не удаётся обучить сеть с точностью >60-70%
 
-    new_w2v = WordToVec(f_name_w2v_model_plays)
+    new_w2v = WordToVec(f_name_w2v_model_subtitles)
 
     #print('[i] Загрузка данных из %s' % f_name_prepared_conversations)
     #with open(f_name_prepared_conversations, 'rb') as f_training_sample:
     #    dataset = pickle.load(f_training_sample)
-    #new_w2v.data_w2v_encode(dataset, f_name_enc_plays, 5000)
+    #new_w2v.data_w2v_encode(dataset, f_name_enc_conversations, 10000)
 
     while True:
         word = input('Введите слово: ')

@@ -126,7 +126,7 @@ def main():
     addr = '127.0.0.1:5000'
     addr = '192.168.2.205:5000'
     addr = '172.17.0.2:5000'
-    #addr = get_address_on_local_network() + ':5000'
+    addr = get_address_on_local_network() + ':5000'
 
     '''
     curses.setupterm()
@@ -161,7 +161,7 @@ def main():
     print(str(data[:5]) + '\n')
     print(result.headers)
     print(result.text[:1000] + '\n')
-    
+    '''
     print('POST-запрос на /chatbot/speech-to-text')
     print('Чтение temp/speech.opus...')
     data = None
@@ -176,10 +176,10 @@ def main():
     print(data + '\n')
     print(result.headers)
     print(result.text)
-
+'''
     print('POST-запрос на /chatbot/speech-to-text')
-    print('Чтение temp/speech.wav...')
-    with open('temp/speech.wav', 'rb') as audio:
+    print('Чтение temp/test1.wav...')
+    with open('temp/test1.wav', 'rb') as audio:
         data = audio.read()
     data = base64.b64encode(data)
     data = {'wav' : data.decode()}
@@ -192,8 +192,8 @@ def main():
     print(result.text)
     
     print('POST-запрос на /chatbot/text-to-speech')
-    print('Отправлено: который час')
-    data = {'text':'который час'}
+    print('Отправлено: как тебя зовут?')
+    data = {'text':'как тебя зовут?'}
     result = requests.post(http + addr + '/chatbot/text-to-speech', headers=headers, json=data, verify=False)
     data = result.json()
     data = base64.b64decode(data.get('wav'))
@@ -202,7 +202,7 @@ def main():
         audio.write(data)
     print(result.headers)
     print(result.text[:1000] + '\n')
-
+    '''
     print('POST-запрос на /chatbot/speech-to-text')
     print('Чтение temp/synthesized_speech.wav...')
     with open('temp/synthesized_speech.wav', 'rb') as audio:
@@ -216,9 +216,9 @@ def main():
     print(data + '\n')
     print(result.headers)
     print(result.text + '\n')
-    
+    '''
     print('POST-запрос на /chatbot/text-to-text')
-    data = {'text':'прощай'}
+    data = {'text':'как тебя зовут?'}
     result = requests.post(http + addr + '/chatbot/text-to-text', headers=headers, json=data, verify=False)
     data = result.json()
     data = data.get('text')

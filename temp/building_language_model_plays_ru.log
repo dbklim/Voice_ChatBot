@@ -7,11 +7,11 @@ wfreq2vocab : Done.
 ===========================================================================================
 
 text2idngram
-Vocab                  : /media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt
-Output idngram         : /media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.idngram
+Vocab                  : /home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt
+Output idngram         : /home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.idngram
 N-gram buffer size     : 100
 Hash table size        : 2000000
-Temp directory         : cmuclmtk-KER3Nm
+Temp directory         : cmuclmtk-MDrC8T
 Max open files         : 20
 FOF size               : 10
 n                      : 3
@@ -22,7 +22,7 @@ Reading text into the n-gram buffer...
 20,000 n-grams processed for each ".", 1,000,000 for each line.
 
 Sorting n-grams...
-Writing sorted n-grams to temporary file cmuclmtk-KER3Nm/1
+Writing sorted n-grams to temporary file cmuclmtk-MDrC8T/1
 Merging 1 temporary files...
 
 2-grams occurring:	N times		> N times	Sug. -spec_num value
@@ -56,10 +56,10 @@ text2idngram : Done.
 
 ..
   n : 3
-  Input file : /media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.idngram     (binary format)
+  Input file : /home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.idngram     (binary format)
   Output files :
-     ARPA format   : /media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.lm
-  Vocabulary file : /media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt
+     ARPA format   : /home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.lm
+  Vocabulary file : /home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt
   Cutoffs :
      2-gram : 0     3-gram : 0     
   Vocabulary type : Closed
@@ -75,8 +75,8 @@ text2idngram : Done.
   Back-off weight storage : 
      Back-off weights will be stored in four bytes.
 Reading vocabulary.
-read_wlist_into_siht: a list of 2763 words was read from "/media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt".
-read_wlist_into_array: a list of 2763 words was read from "/media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt".
+read_wlist_into_siht: a list of 2763 words was read from "/home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt".
+read_wlist_into_array: a list of 2763 words was read from "/home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru_vocab.txt".
 WARNING: <s> appears as a vocabulary item, but is not labelled as a
 context cue.
 Allocated space for 3571428 2-grams.
@@ -99,5 +99,5 @@ prob[UNK] = 1e-99
 Incrementing contexts...
 Calculating back-off weights...
 Writing out language model...
-ARPA-style 3-gram will be written to /media/vlad/User storage/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.lm
+ARPA-style 3-gram will be written to /home/vlad/Проекты/Voice_ChatBot/temp/prepared_questions_plays_ru.lm
 idngram2lm : Done.

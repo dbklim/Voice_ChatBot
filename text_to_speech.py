@@ -64,7 +64,9 @@ class TextToSpeech:
 
 def main():
     tts = TextToSpeech('anna')
-    tts.get('ты любишь меня?')
+    text = input('Введите фразу: ')
+    tts.get(text, 'temp/test2.wav')
+    
 
 
 if __name__ == '__main__':

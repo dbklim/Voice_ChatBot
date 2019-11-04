@@ -47,7 +47,7 @@ sudo ldconfig
 Примеры:
 echo "Проверка синтезатора речи" | RHVoice-client -s Anna+CLB | aplay
 echo "Проверка синтезатора речи" | RHVoice-client -s Anna+CLB >/tmp/test.wav
-echo "проверка" | RHVoice-client -s Anna+CLB |sox -t wav - -r 32000 -c 1 -b 16 -t wav - >/tmp/test.wav
+echo "проверка" | RHVoice-client -s Anna+CLB | sox -t wav - -r 32000 -c 1 -b 16 -t wav - >/tmp/test.wav
 
 === Голоса ===
 Русский

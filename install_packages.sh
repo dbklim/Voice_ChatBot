@@ -6,7 +6,7 @@ PACKAGES="ffmpeg x264 x265 python3.6 python3.6-dev python3-pip python3-setuptool
 # Установка пакетов Ubuntu
 apt-get -y --force-yes install $PACKAGES
 
-PACKAGES="decorator flask>=1.0.2 flask-httpauth>=3.2.4 gensim gevent>=1.3.7 h5py keras matplotlib numpy pocketsphinx pydub simpleaudio requests git+https://github.com/datalogai/recurrentshop.git git+https://github.com/Desklop/seq2seq.git"
+PACKAGES="decorator==4.4.0 flask==1.0.2 flask-httpauth==3.2.4 gensim==3.7.1 gevent==1.3.7 h5py==2.9.0 keras==2.2.4 matplotlib==3.0.3 numpy==1.16.2 pocketsphinx==0.1.15 pydub==0.23.1 simpleaudio==1.0.2 requests==2.18.4 git+https://github.com/datalogai/recurrentshop.git git+https://github.com/Desklop/seq2seq.git"
 # Установка пакетов Python3
 yes | pip3 install --upgrade pip
 yes | pip3 install $PACKAGES
@@ -39,10 +39,10 @@ cd -
 
 if [[ $1 = 'gpu' ]]
 then 
-    yes | pip3 install tensorflow-gpu
+    yes | pip3 install tensorflow-gpu==1.13.1
     ./install_files/download_CUDA10.0_cuDNN.sh
     ./install_files/Install_CUDA10.0_cuDNN/install.sh
     rm -rf install_files/Install_CUDA10.0_cuDNN
 else 
-    yes | pip3 install tensorflow
+    yes | pip3 install tensorflow==1.13.1
 fi

@@ -29,6 +29,8 @@ from recurrentshop.engine import _OptionalInputPlaceHolder
 from source_to_prepared import SourceToPrepared
 from word_to_vec import WordToVec
 
+import matplotlib.pyplot as plt
+
 
 curses.setupterm()
 
@@ -69,6 +71,20 @@ class TextToText:
             print('[i] Загрузка параметров модели из %s и %s' % (f_name_model, f_name_model_weights))
             self.__load_model(f_name_model)
             self.model.load_weights(f_name_model_weights)
+
+            #self.model.layers[6].cells.pop()
+            #self.model.layers[6].cells.pop()
+
+            #from keras import Model
+            #self.model = Model(inputs=self.model.input, outputs=self.model.layers[6].cells[1].output)
+
+            #from keras.utils import plot_model
+            #plot_model(self.model, to_file='model.png')
+
+            #import matplotlib.pyplot as plt
+            #temp = self.model.get_weights()[0]
+            #plt.matshow(temp, cmap='inferno')
+            #plt.show()
             
             self.stp = SourceToPrepared(self.model.get_layer(index=0).input_shape[1])
             self.w2v = WordToVec(f_name_w2v_model)
@@ -326,7 +342,15 @@ class TextToText:
         else:
             question = self.w2v.word2vec(question)
         question = (question + 1.0) * 0.5
+
+        #plt.matshow(question, cmap='inferno')
+        #plt.show()
+
         answer = self.model.predict(question[np.newaxis,:])
+
+        #plt.matshow(answer[0], cmap='inferno')
+        #plt.show()
+
         answer = answer * 2.0 - 1.0
         answer = self.w2v.vec2word(answer[0])
         answer = self.stp.prepare_answer(answer)
@@ -347,6 +371,7 @@ class TextToText:
 # Глубина 1, 5000 примеров, циклов 100, эпох 5 - ошибка 0.0194 (270 из 950 правильных ответов)
 # Глубина 1, 5000 примеров, циклов 200, эпох 5 - ошибка 0.0172 (311 из 880 правильных ответов)
 # Глубина 2, 5000 примеров, циклов 500, эпох 5 - ошибка 0.0129 (2589 из 5000 правильных ответов)
+# Глубина 2, 10000 примеров, циклов 500, эпох 5 - ошибка 0.2640 (466 из 10000 правильных ответов) (размерность вектора 500, эпох 500)
 
 # Пьесы (batch_size=32):
 # Глубина 2, 1601 пример, 50 циклов, 5 эпох - ошибка 0.0217 (141 из 370 правильных ответов) (размерность вектора 500)
@@ -360,7 +385,9 @@ class TextToText:
 
 # Диалоги (batch_size=32):
 # Глубина 2, 5000 примеров, 500 циклов, 5 эпох - ошибка 0.0150 (2317 из 5000 правильных ответов, точность 46.34%)
-# исправить ридми, настроить rhvoice
+# Глубина 2, 5000 примеров, 500 циклов, 5 эпох - ошибка 0.1332 (4358 из 5000 правильных ответов, точность 87.16%), вектор 500, эпох 500, время 5.6ч+15.8ч
+# Глубина 2, 10000 примеров, 500 циклов, 5 эпох - ошибка 0.1432 (8111 из 10000 правильных ответов, точность 81.11%), вектор 500, эпох 500, время 32.28ч
+
 def main():
     f_name_plays = 'data/plays_ru/plays_ru.txt'
     f_name_subtitles = 'data/subtitles_ru/subtitles_ru.txt'
@@ -377,11 +404,14 @@ def main():
     f_name_w2v_model_conversations = 'data/conversations_ru/w2v_model_conversations_ru.bin'
 
     ttt = TextToText(train=True)
-    ttt.prepare(f_name_plays, f_name_prepared_subtitles=f_name_prepared_subtitles, size=500, epochs=500, logging=True)
+    #ttt.prepare(f_name_plays, f_name_prepared_subtitles=f_name_prepared_subtitles, size=500, epochs=500, logging=True)
     #ttt.load_prepared(name_dataset='plays_ru')
-    ttt.train(f_name_enc_plays, depth_model=2, training_cycles=200, epochs=5)
+    #ttt.train(f_name_enc_plays, depth_model=2, training_cycles=200, epochs=5)
 
     new_ttt = TextToText(name_dataset='plays_ru')
+
+    #new_ttt.assessment_training_accuracy(f_name_enc_subtitles)
+
     while(True):
         quest = input('Вы: ')
         answer = new_ttt.predict(quest)

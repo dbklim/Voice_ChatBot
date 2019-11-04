@@ -81,11 +81,12 @@ def train():
 
     ttt = TextToText(train=True)
     ttt.prepare(f_name_source_data, f_name_training_sample, f_name_subtitles, f_name_prepared_subtitles, f_name_enc_training_sample, f_name_w2v_model, 
-                f_name_w2v_vocab, len_encode=5000, size=500, epochs=500, logging=True)
-    ttt.train(f_name_enc_training_sample, f_name_model, f_name_model_weights, training_cycles=200, epochs=5)
+                f_name_w2v_vocab, len_encode=10000, size=500, epochs=None, logging=True)
+    #ttt.load_prepared(f_name_w2v_model=f_name_w2v_model, f_name_enc_training_sample=f_name_enc_training_sample)
+    ttt.train(f_name_enc_training_sample, f_name_model, f_name_model_weights, depth_model=2, training_cycles=200, epochs=5)
 
     lm = LanguageModel()
-    lm.build_language_model(f_name_source_data, 5000)
+    lm.build_language_model(f_name_source_data, 10000)
     
     # SimpleSeq2Seq
     # 248 входных фраз, epochs = 100
