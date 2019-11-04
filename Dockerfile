@@ -20,6 +20,10 @@ RUN pip3 install decorator==4.4.0 flask==1.0.2 flask-httpauth==3.2.4 gensim==3.7
 COPY . /Voice_ChatBot
 WORKDIR /Voice_ChatBot
 
+# Загрузка обучающих данных и моделей из Google Drive
+RUN if [[ ! $(ls -A 'data') || ! -f 'install_files/RHVoice.zip' ]]; then ./install_files/download_train_data_and_models.sh && \
+    rm -rf data/converations_ru data/subtitles_ru data/plays_ru/*.npz data/plays_ru/*.pkl data/plays_ru/*.png; fi
+
 # Установка CMUclmtk_v0.7
 RUN unzip install_files/cmuclmtk-0.7.zip
 WORKDIR /Voice_ChatBot/cmuclmtk-0.7
@@ -35,9 +39,7 @@ RUN scons --config=force
 RUN scons install
 WORKDIR /Voice_ChatBot
 
-RUN rm -rf cmuclmtk-0.7 && \
-    rm -rf RHVoice && \
-    rm -rf install_files
+RUN rm -rf cmuclmtk-0.7 RHVoice install_files
 RUN ldconfig
 
 # Копирование статической языковой модели, словаря и акустической модели для PocketSphinx

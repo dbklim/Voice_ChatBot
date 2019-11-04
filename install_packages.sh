@@ -11,6 +11,9 @@ PACKAGES="decorator==4.4.0 flask==1.0.2 flask-httpauth==3.2.4 gensim==3.7.1 geve
 yes | pip3 install --upgrade pip
 yes | pip3 install $PACKAGES
 
+# Загрузка обучающих данных и моделей из Google Drive
+./install_files/download_train_data_and_models.sh
+
 # Установка CMUclmtk_v0.7
 unzip install_files/cmuclmtk-0.7.zip
 cd cmuclmtk-0.7
@@ -36,9 +39,6 @@ cp prepared_questions_plays_ru.lm /usr/local/lib/python3.6/dist-packages/pockets
 cp prepared_questions_plays_ru.dic /usr/local/lib/python3.6/dist-packages/pocketsphinx/model/ru_bot_plays_ru.dic
 cp -r zero_ru.cd_cont_4000 /usr/local/lib/python3.6/dist-packages/pocketsphinx/model/zero_ru.cd_cont_4000
 cd -
-
-# Загрузка обучающих данных и моделей из Google Drive
-./install_files/download_train_data_and_models.sh
 
 if [[ $1 = 'gpu' ]]
 then 

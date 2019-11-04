@@ -123,9 +123,6 @@ def main():
     auth = base64.b64encode('bot:test_bot'.encode())
     headers = {'Authorization' : 'Basic ' + auth.decode()}
     http = 'http://'
-    addr = '127.0.0.1:5000'
-    addr = '192.168.2.205:5000'
-    addr = '172.17.0.2:5000'
     addr = get_address_on_local_network() + ':5000'
 
     '''
@@ -176,7 +173,7 @@ def main():
     print(data + '\n')
     print(result.headers)
     print(result.text)
-'''
+    '''
     print('POST-запрос на /chatbot/speech-to-text')
     print('Чтение temp/test1.wav...')
     with open('temp/test1.wav', 'rb') as audio:
