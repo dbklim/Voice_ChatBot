@@ -37,6 +37,9 @@ cp prepared_questions_plays_ru.dic /usr/local/lib/python3.6/dist-packages/pocket
 cp -r zero_ru.cd_cont_4000 /usr/local/lib/python3.6/dist-packages/pocketsphinx/model/zero_ru.cd_cont_4000
 cd -
 
+# Загрузка обучающих данных и моделей из Google Drive
+./install_files/download_train_data_and_models.sh
+
 if [[ $1 = 'gpu' ]]
 then 
     yes | pip3 install tensorflow-gpu==1.13.1
