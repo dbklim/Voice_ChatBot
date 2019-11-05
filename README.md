@@ -15,7 +15,7 @@
 Полный список всех необходимых для работы зависимостей:
 1. Для Python3.5-3.6: decorator, Flask (>=1.0.2), Flask-HTTPAuth (>=3.2.4), gensim, gevent (>=1.3.7), h5py, Keras (>=2.2.4), matplotlib, numpy, pocketsphinx, pydub, simpleaudio, [recurrentshop](https://github.com/datalogai/recurrentshop), requests, [seq2seq](https://github.com/Desklop/seq2seq), tensorflow[-gpu].
 2. Для Ubuntu: ffmpeg, x264, x265, make, git, scons, gcc, pkg-config, pulseaudio, libpulse-dev, portaudio19-dev, libglibmm-2.4-dev, libasound-dev, libao4, libao-dev, sonic, sox, swig, flite1-dev, net-tools, zip, unzip.
-3. Данные для обучения и готовые модели: необходимо вручную загрузить из Google Drive архив [`Voice_ChatBot_data.zip`(3.4Gb)](https://drive.google.com/uc?export=download&id=1mytJoY9GJdQB8nQliafIJajwUnIvLRfo) и распаковать в корень проекта (папки `data` и `install_files`).
+3. Данные для обучения и готовые модели: необходимо вручную загрузить из Google Drive архив [`Voice_ChatBot_data.zip`(3.4Gb)](https://drive.google.com/uc?export=download&id=1_hUmsu1d2bigS2Lpkm0VRNiL7GFF_AvE) и распаковать в корень проекта (папки `data` и `install_files`).
 
 Если вы используете Ubuntu 16.04 или выше, для установки всех пакетов можно воспользоваться `install_packages.sh` (проверено в Ubuntu 16.04 и 18.04). По умолчанию будет установлен [TensorFlow](https://www.tensorflow.org/install/) для CPU. Если у вас есть видеокарта nvidia с утановленным официальным драйвером версии 410, вы можете установить [TensorFlowGPU](https://www.tensorflow.org/install/gpu). Для этого необходимо при запуске `install_packages.sh` передать параметр `gpu`. Например:
 ```
@@ -23,7 +23,7 @@
 ```
 В этом случае из моего Google Drive будет загружено 2 архива:
 1. [`Install_CUDA10.0_cuDNN_for410.zip`(2.0Gb)](https://drive.google.com/uc?export=download&id=19kFTwkF7BOXmu1mYBTfOMoxhWDXfOytS) с CUDA 10.0 и cuDNN 7.5.0 (если был передан параметр `gpu`). Установка будет выполнена автоматически, но если что-то пошло не так, есть инструкция `Install.txt` в загруженном архиве.
-2. [`Voice_ChatBot_data.zip`(3.4Gb)](https://drive.google.com/uc?export=download&id=1mytJoY9GJdQB8nQliafIJajwUnIvLRfo) с данными для обучения и готовыми моделями. Он будет автоматически распакован в папки `data` и `install_files` в корне проекта.
+2. [`Voice_ChatBot_data.zip`(3.4Gb)](https://drive.google.com/uc?export=download&id=1_hUmsu1d2bigS2Lpkm0VRNiL7GFF_AvE) с данными для обучения и готовыми моделями. Он будет автоматически распакован в папки `data` и `install_files` в корне проекта.
 
 Если вы не можете или не хотите воспользоваться скриптом для установки всех необходимых пакетов, нужно вручную установить [RHVoice](https://github.com/Olga-Yakovleva/RHVoice) и [CMUclmtk_v0.7](https://cmusphinx.github.io/wiki/cmuclmtkdevelopment/), используя инструкции в `install_files/Install RHVoice.txt` и `install_files/Install CMUclmtk.txt`. Так же необходимо скопировать файлы языковой, акустической модели и словаря для PocketSphinx из `temp/` в `/usr/local/lib/python3.6/dist-packages/pocketsphinx/model` (у вас путь к `python3.6` может отличаться). Файлы языковой модели `prepared_questions_plays_ru.lm` и словаря `prepared_questions_plays_ru.dic` необходимо переименовать в `ru_bot_plays_ru.lm` и `ru_bot_plays_ru.dic` (либо изменить их название в `speech_to_text.py`, если у вас есть своя языковая модель и словарь).
 
